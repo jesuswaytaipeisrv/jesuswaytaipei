@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>台北樣教會 JesuswayTaipei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        /* 自訂樣式與北歐風色調 */
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FAFAFA; /* 溫暖的米白色背景 */
+            color: #333333;
+        }
+        /* 主視覺背景圖：這裡先用漸層代替，未來請換成包含橡木、吊燈、植物的實景照片 */
+        .hero-bg {
+            background: linear-gradient(rgba(240, 235, 225, 0.8), rgba(240, 235, 225, 0.8)), url('https://source.unsplash.com/1600x900/?oak,plant,coffee,notebook') center/cover;
+        }
+        .nordic-card {
+            background-color: #FFFFFF;
+            border: 1px solid #EAEAEA;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="index.html" class="text-2xl font-bold text-gray-800 tracking-wider">
+                        台北樣教會 <span class="text-sm font-normal text-gray-500">JesuswayTaipei</span>
+                    </a>
+                </div>
+                <div class="hidden md:flex space-x-6">
+                    <a href="about.html" class="text-gray-600 hover:text-yellow-600 transition">關於我們</a>
+                    <a href="sunday.html" class="text-gray-600 hover:text-yellow-600 transition">主日信息</a>
+                    <a href="youth.html" class="text-gray-600 hover:text-yellow-600 transition">樣青講堂</a>
+                    <a href="abbafood.html" class="text-gray-600 hover:text-yellow-600 transition">ABBAFOOD</a>
+                    <a href="worship.html" class="text-gray-600 hover:text-yellow-600 transition">WaryWorship</a>
+                    <a href="creative.html" class="text-gray-600 hover:text-yellow-600 transition">創意活動</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-yellow-600 transition">聯絡我們</a>
+                    <a href="donate.html" class="text-gray-600 hover:text-yellow-600 transition">奉獻資訊</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero-bg h-screen flex items-center justify-center pt-20">
+        <div class="text-center px-4">
+            <h1 class="text-5xl md:text-6xl font-bold text-gray-800 mb-6 drop-shadow-sm">歡迎來到 台北樣教會</h1>
+            <p class="text-xl text-gray-700 mb-8 max-w-2xl mx-auto">在溫暖的木質與咖啡香中，感受真實的愛與陪伴。</p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 space-y-24">
+        
+        <section class="flex flex-col md:flex-row items-center gap-12">
+            <div class="w-full md:w-1/2">
+                <div class="aspect-video bg-gray-200 rounded-lg shadow-md flex items-center justify-center text-gray-500">
+                    [此處可放置 樣青講堂 的照片或 YouTube 影片]
+                </div>
+            </div>
+            <div class="w-full md:w-1/2">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-400 pl-4">樣青講堂</h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    在這裡輸入樣青講堂的簡介文字。點擊下方按鈕可以進入專屬頁面觀看更多照片與詳細影片紀錄。
+                </p>
+                <a href="youth.html" class="inline-block border border-gray-800 text-gray-800 px-6 py-2 hover:bg-gray-800 hover:text-white transition duration-300">了解更多</a>
+            </div>
+        </section>
+
+        <section class="flex flex-col md:flex-row-reverse items-center gap-12">
+            <div class="w-full md:w-1/2">
+                <div class="aspect-video bg-gray-200 rounded-lg shadow-md flex items-center justify-center text-gray-500">
+                    [此處可放置 ABBAFOOD 的照片或 YouTube 影片]
+                </div>
+            </div>
+            <div class="w-full md:w-1/2">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-green-500 pl-4">ABBAFOOD職場讀書會</h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    結合咖啡、筆記本與職場智慧。我們探討如何在職場中活出信仰，分享彼此的挑戰與恩典。
+                </p>
+                <a href="abbafood.html" class="inline-block border border-gray-800 text-gray-800 px-6 py-2 hover:bg-gray-800 hover:text-white transition duration-300">了解更多</a>
+            </div>
+        </section>
+
+        <section class="flex flex-col md:flex-row items-center gap-12">
+            <div class="w-full md:w-1/2">
+                <div class="aspect-video bg-gray-200 rounded-lg shadow-md flex items-center justify-center text-gray-500">
+                    [此處可放置 敬拜團 的照片或 YouTube 影片]
+                </div>
+            </div>
+            <div class="w-full md:w-1/2">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-400 pl-4">WaryWorship 敬拜團</h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    透過音樂與敬拜，我們渴望帶領人進入神同在的溫暖與平安中。這裡有我們最新的敬拜影片與創作。
+                </p>
+                <a href="worship.html" class="inline-block border border-gray-800 text-gray-800 px-6 py-2 hover:bg-gray-800 hover:text-white transition duration-300">聆聽詩歌</a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-2xl font-bold mb-2">台北樣教會 JesuswayTaipei</h3>
+                <p class="text-gray-400">期待與您在這裡相聚。</p>
+            </div>
+            <div class="text-gray-300 text-sm md:text-base space-y-2">
+                <p>📍 地址：台北市中山區松江路206號十四樓之一</p>
+                <p>📞 電話：02-27079907</p>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
