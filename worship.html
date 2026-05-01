@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WayWorship 敬拜團 - 台北樣教會 JesuswayTaipei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FAFAFA;
+            color: #333333;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="index.html" class="text-xl md:text-2xl font-bold text-gray-800 tracking-wider">
+                        台北樣教會 <span class="text-xs md:text-sm font-normal text-gray-500">JesuswayTaipei</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex space-x-6">
+                    <a href="about.html" class="text-gray-600 hover:text-yellow-600 transition">關於我們</a>
+                    <a href="sunday.html" class="text-gray-600 hover:text-yellow-600 transition">主日信息</a>
+                    <a href="youth.html" class="text-gray-600 hover:text-yellow-600 transition">樣青講堂</a>
+                    <a href="abbafood.html" class="text-gray-600 hover:text-yellow-600 transition">ABBAFOOD</a>
+                    <a href="worship.html" class="text-gray-600 hover:text-yellow-600 transition">WayWorship</a>
+                    <a href="creative.html" class="text-gray-600 hover:text-yellow-600 transition">創意活動</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-yellow-600 transition">聯絡我們</a>
+                    <a href="donate.html" class="text-gray-600 hover:text-yellow-600 transition">奉獻資訊</a>
+                </div>
+
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="text-gray-600 hover:text-gray-900 focus:outline-none">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full">
+            <div class="px-4 pt-2 pb-4 space-y-2 flex flex-col">
+                <a href="about.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">關於我們</a>
+                <a href="sunday.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">主日信息</a>
+                <a href="youth.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">樣青講堂</a>
+                <a href="abbafood.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">ABBAFOOD</a>
+                <a href="worship.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">WayWorship</a>
+                <a href="creative.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">創意活動</a>
+                <a href="contact.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">聯絡我們</a>
+                <a href="donate.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">奉獻資訊</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="pt-28 md:pt-32 pb-10 md:pb-12 bg-gray-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">WayWorship 敬拜團</h1>
+            <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">用音樂創作來傳遞上帝心意</p>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+        
+        <section>
+            <div class="flex flex-col md:flex-row h-auto md:h-80 rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                <div class="w-full md:w-1/3 h-64 md:h-full">
+                    <img src="https://source.unsplash.com/800x600/?guitar,music" alt="WayWorship 照片 1" class="w-full h-full object-cover">
+                </div>
+                <div class="w-full md:w-1/3 h-64 md:h-full border-y-4 md:border-y-0 md:border-x-4 border-white">
+                    <img src="https://source.unsplash.com/800x600/?singing,concert" alt="WayWorship 照片 2" class="w-full h-full object-cover">
+                </div>
+                <div class="w-full md:w-1/3 h-64 md:h-full">
+                    <img src="https://source.unsplash.com/800x600/?band,stage" alt="WayWorship 照片 3" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100 max-w-4xl mx-auto">
+            <div class="text-gray-700 leading-relaxed space-y-6 md:text-lg">
+                <p>
+                    2015年成立，是一個用音樂創作來傳遞上帝心意的音樂團體。他們用最誠摯真實的生命，譜出多首敬拜讚美的樂曲，期待讓更多的人能在這樣的音樂中得滿足、得喜樂、得安慰，並將生命與上帝相連。
+                </p>
+                
+                <div class="my-8 bg-yellow-50/50 p-6 rounded-lg border-l-4 border-yellow-400">
+                    <p class="text-gray-800">
+                        2021年以原創詩歌<strong class="text-gray-900 font-bold">「走進祢應許」</strong>自 2000 多件投稿中脫穎而出，入圍 GoodTV 好消息電視台所舉辦的「全球詩歌創作徵選」，並以 9,529 票榮獲<strong class="text-yellow-600 font-bold">「網路人氣獎第五名」</strong>。
+                    </p>
+                </div>
+
+                <p>
+                    直至今日，他們持續與各團體合作，甚至跨足國際，只為了不斷傳播各個族群、各個世代所發出的讚美聲音。
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-yellow-400 pl-3">原創音樂與敬拜</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="WayWorship 影片 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="WayWorship 影片 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="WayWorship 影片 3" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/dQw4w9WgXcQ" title="WayWorship 影片 4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-xl md:text-2xl font-bold mb-2">台北樣教會 JesuswayTaipei</h3>
+                <p class="text-gray-400 text-sm md:text-base">期待與您在這裡相聚。</p>
+            </div>
+            <div class="text-gray-300 text-sm md:text-base space-y-2">
+                <p>📍 地址：台北市中山區松江路206號十四樓之一</p>
+                <p>📞 電話：02-27079907</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
