@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>創意活動 - 台北樣教會 JesuswayTaipei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FAFAFA;
+            color: #333333;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="index.html" class="text-xl md:text-2xl font-bold text-gray-800 tracking-wider">
+                        台北樣教會 <span class="text-xs md:text-sm font-normal text-gray-500">JesuswayTaipei</span>
+                    </a>
+                </div>
+                
+                <div class="hidden md:flex space-x-6">
+                    <a href="about.html" class="text-gray-600 hover:text-yellow-600 transition">關於我們</a>
+                    <a href="sunday.html" class="text-gray-600 hover:text-yellow-600 transition">主日信息</a>
+                    <a href="youth.html" class="text-gray-600 hover:text-yellow-600 transition">樣青講堂</a>
+                    <a href="abbafood.html" class="text-gray-600 hover:text-yellow-600 transition">ABBAFOOD</a>
+                    <a href="worship.html" class="text-gray-600 hover:text-yellow-600 transition">WayWorship</a>
+                    <a href="creative.html" class="text-gray-600 hover:text-yellow-600 transition">創意活動</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-yellow-600 transition">聯絡我們</a>
+                    <a href="donate.html" class="text-gray-600 hover:text-yellow-600 transition">奉獻資訊</a>
+                </div>
+
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-button" class="text-gray-600 hover:text-gray-900 focus:outline-none">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full">
+            <div class="px-4 pt-2 pb-4 space-y-2 flex flex-col">
+                <a href="about.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">關於我們</a>
+                <a href="sunday.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">主日信息</a>
+                <a href="youth.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">樣青講堂</a>
+                <a href="abbafood.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">ABBAFOOD</a>
+                <a href="worship.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">WayWorship</a>
+                <a href="creative.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">創意活動</a>
+                <a href="contact.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">聯絡我們</a>
+                <a href="donate.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">奉獻資訊</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="pt-28 md:pt-32 pb-10 md:pb-12 bg-gray-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">創意活動</h1>
+            <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">不只是舉辦，而是創造一段被記住的經歷</p>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+        
+        <section>
+            <div class="flex flex-col md:flex-row h-auto md:h-80 rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                <div class="w-full md:w-1/3 h-64 md:h-full">
+                    <img src="https://source.unsplash.com/800x600/?event,people" alt="活動照片 1" class="w-full h-full object-cover">
+                </div>
+                <div class="w-full md:w-1/3 h-64 md:h-full border-y-4 md:border-y-0 md:border-x-4 border-white">
+                    <img src="https://source.unsplash.com/800x600/?workshop,creative" alt="活動照片 2" class="w-full h-full object-cover">
+                </div>
+                <div class="w-full md:w-1/3 h-64 md:h-full">
+                    <img src="https://source.unsplash.com/800x600/?interaction,smile" alt="活動照片 3" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100 max-w-4xl mx-auto">
+            <div class="text-gray-700 leading-relaxed space-y-6 md:text-lg">
+                <p class="font-bold text-gray-800 text-xl md:text-2xl border-l-4 border-yellow-400 pl-4 py-1">
+                    對我們來說，每場活動都是重新挖掘創意的機會。
+                </p>
+                <p>
+                    我們不太複製過去的形式，<br class="hidden md:block">
+                    每一次都會再想一遍，<br class="hidden md:block">
+                    這次，我們真正想帶給人的是什麼？
+                </p>
+                <p>
+                    從主題、流程到每一個細節，<br class="hidden md:block">
+                    我們都重新設計、精緻雕琢。<br class="hidden md:block">
+                    不是為了做得很厲害，<br class="hidden md:block">
+                    而是希望來到這裡的人們，<br class="hidden md:block">
+                    真的有被祝福的感受，能在心裡留下點什麼。
+                </p>
+            </div>
+        </section>
+
+        <section class="space-y-12">
+            
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+                <div class="flex flex-col lg:flex-row gap-8 items-center">
+                    <div class="w-full lg:w-1/2">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-400 pl-3">2025｜《開箱關係：探索關係裡的隱藏寶物》</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            以「關係」為主題的互動式體驗，透過設計活動與引導對話，幫助參與者覺察自己在關係中的狀態與期待，並且與一同參加的那個人，重新打開連結的新可能。
+                        </p>
+                    </div>
+                    <div class="w-full lg:w-1/2 flex justify-center gap-4 sm:gap-6">
+                        <img src="https://source.unsplash.com/400x400/?box,gift" alt="2025 照片 1" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?friends,talking" alt="2025 照片 2" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?hug,connection" alt="2025 照片 3" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+                <div class="flex flex-col lg:flex-row-reverse gap-8 items-center">
+                    <div class="w-full lg:w-1/2">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-green-500 pl-3">2024｜《榯光之森》沉浸式體驗</h3>
+                        <p class="text-gray-600 leading-relaxed">
+                            打造一座充滿象徵與故事的森林空間，結合音樂、角色與探索任務，帶領人回顧十年生命歷程、整理內在，在旅程中重新看見未來的方向與盼望。
+                        </p>
+                    </div>
+                    <div class="w-full lg:w-1/2 flex justify-center gap-4 sm:gap-6">
+                        <img src="https://source.unsplash.com/400x400/?forest,light" alt="2024 照片 1" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?trees,path" alt="2024 照片 2" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?music,acoustic" alt="2024 照片 3" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+                <div class="flex flex-col lg:flex-row gap-8 items-center">
+                    <div class="w-full lg:w-1/2">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-400 pl-3">2022｜《音樂故事書店》沉浸式體驗</h3>
+                        <p class="text-gray-600 leading-relaxed mb-4">
+                            以「書店」為意象打造的故事空間，結合原創音樂、情境飲食與沉浸式體驗，邀請人暫時離開外在的忙碌與不安。
+                        </p>
+                        <p class="text-gray-600 leading-relaxed">
+                            在疫情後充滿不確定的時代裡，透過三位來自不同背景的角色故事，帶領參與者在其中停下腳步、重新思考，也在過程中，慢慢尋找生命的方向與答案。
+                        </p>
+                    </div>
+                    <div class="w-full lg:w-1/2 flex justify-center gap-4 sm:gap-6">
+                        <img src="https://source.unsplash.com/400x400/?bookstore,reading" alt="2022 照片 1" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?coffee,book" alt="2022 照片 2" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?singer,guitar" alt="2022 照片 3" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition duration-300">
+                <div class="flex flex-col lg:flex-row-reverse gap-8 items-center">
+                    <div class="w-full lg:w-1/2">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 border-l-4 border-green-500 pl-3">2021｜《摩登臺北疑案 》手機解謎遊戲</h3>
+                        <p class="text-gray-600 leading-relaxed mb-4">
+                            與聚樂邦合作，在疫情期間打造的手機解謎遊戲，結合手機協作、懸疑推理與實體道具，帶領參與者穿越到1920年代的大稻埕，在故事中蒐集線索、解開謎團，並做出關鍵選擇。
+                        </p>
+                        <p class="text-gray-600 leading-relaxed">
+                            透過角色扮演與團隊合作，讓人在遊戲過程中，不只是解題，也開始思考關係中的互動與人生中的抉擇，學習在變動的時代裡，活出影響力。
+                        </p>
+                    </div>
+                    <div class="w-full lg:w-1/2 flex justify-center gap-4 sm:gap-6">
+                        <img src="https://source.unsplash.com/400x400/?smartphone,puzzle" alt="2021 照片 1" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?vintage,taipei" alt="2021 照片 2" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                        <img src="https://source.unsplash.com/400x400/?detective,clues" alt="2021 照片 3" class="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-full shadow-md border-4 border-white">
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-xl md:text-2xl font-bold mb-2">台北樣教會 JesuswayTaipei</h3>
+                <p class="text-gray-400 text-sm md:text-base">期待與您在這裡相聚。</p>
+            </div>
+            <div class="text-gray-300 text-sm md:text-base space-y-2">
+                <p>📍 地址：台北市中山區松江路206號十四樓之一</p>
+                <p>📞 電話：02-27079907</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
