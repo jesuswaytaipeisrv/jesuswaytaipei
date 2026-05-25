@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WayWorship — JesuswayTaipei's worship team, creating original music to convey God's heart, winner of the 5th place Online Popularity Award at GoodTV in 2021.">
+    <meta property="og:title" content="WayWorship - JesuswayTaipei">
+    <meta property="og:description" content="JesuswayTaipei's worship team, creating original music to convey God's heart. Winner of the 5th place Online Popularity Award at GoodTV in 2021.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://jesuswaytaipeisrv.github.io/jesuswaytaipei/assets/images/worship01.jpg">
+    <meta property="og:url" content="https://jesuswaytaipeisrv.github.io/jesuswaytaipei/en/worship.html">
+    <title>WayWorship - JesuswayTaipei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FAFAFA;
+            color: #333333;
+            overflow-wrap: break-word;
+        }
+        img, iframe {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="index.html" class="text-xl md:text-2xl font-bold text-gray-800 tracking-wider">
+                        JesuswayTaipei <span class="text-xs md:text-sm font-normal text-gray-500">台北樣教會</span>
+                    </a>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="about.html" class="text-gray-600 hover:text-yellow-600 transition">About Us</a>
+                    <a href="sunday.html" class="text-gray-600 hover:text-yellow-600 transition">Sunday Messages</a>
+                    <a href="youth.html" class="text-gray-600 hover:text-yellow-600 transition">Youth Ministry</a>
+                    <a href="abbafood.html" class="text-gray-600 hover:text-yellow-600 transition">ABBAFOOD</a>
+                    <a href="worship.html" class="text-gray-600 hover:text-yellow-600 transition">WayWorship</a>
+                    <a href="creative.html" class="text-gray-600 hover:text-yellow-600 transition">Creative Events</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-yellow-600 transition">Contact</a>
+                    <a href="donate.html" class="text-gray-600 hover:text-yellow-600 transition">Donate</a>
+                    <a href="../worship.html" class="text-xs border border-gray-400 text-gray-500 px-2 py-1 rounded hover:border-yellow-600 hover:text-yellow-600 transition">中文</a>
+                </div>
+
+                <div class="md:hidden flex items-center gap-3">
+                    <a href="../worship.html" class="text-xs border border-gray-400 text-gray-500 px-2 py-1 rounded hover:border-yellow-600 hover:text-yellow-600 transition">中文</a>
+                    <button id="mobile-menu-button" class="text-gray-600 hover:text-gray-900 focus:outline-none">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full">
+            <div class="px-4 pt-2 pb-4 space-y-2 flex flex-col">
+                <a href="about.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">About Us</a>
+                <a href="sunday.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Sunday Messages</a>
+                <a href="youth.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Youth Ministry</a>
+                <a href="abbafood.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">ABBAFOOD</a>
+                <a href="worship.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">WayWorship</a>
+                <a href="creative.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Creative Events</a>
+                <a href="contact.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Contact</a>
+                <a href="donate.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Donate</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="pt-28 md:pt-32 pb-10 md:pb-12 bg-gray-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">WayWorship</h1>
+            <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">Conveying God's heart through original music</p>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+
+        <section>
+            <div class="flex flex-col md:flex-row h-auto md:h-80 rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                <div class="w-full md:w-1/3 h-64 md:h-full">
+                    <img src="../assets/images/worship01.jpg" alt="WayWorship Photo 1" class="w-full h-full object-cover">
+                </div>
+                <div class="w-full md:w-1/3 h-64 md:h-full border-y-4 md:border-y-0 md:border-x-4 border-white">
+                    <img src="../assets/images/worship02.jpg" alt="WayWorship Photo 2" class="w-full h-full object-cover">
+                </div>
+                <div class="w-full md:w-1/3 h-64 md:h-full">
+                    <img src="../assets/images/worship03.jpg" alt="WayWorship Photo 3" class="w-full h-full object-cover">
+                </div>
+            </div>
+        </section>
+
+        <section class="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100 max-w-4xl mx-auto">
+            <div class="text-gray-700 leading-relaxed space-y-6 md:text-lg">
+                <p>
+                    Founded in 2015, WayWorship is a music collective that conveys God's heart through original composition. With sincere and authentic lives, they have crafted numerous worship songs, hoping that more people will find satisfaction, joy, and comfort through this music — and connect their lives to God.
+                </p>
+
+                <div class="my-8 bg-yellow-50/50 p-6 rounded-lg border-l-4 border-yellow-400">
+                    <p class="text-gray-800">
+                        In 2021, their original song <strong class="text-gray-900 font-bold">"Walking Into Your Promise"</strong> stood out from over 2,000 submissions to be nominated in GoodTV's "Global Worship Song Creation Competition," ultimately receiving <strong class="text-yellow-600 font-bold">5th place in the Online Popularity Award</strong> with 9,529 votes.
+                    </p>
+                </div>
+
+                <p>
+                    To this day, they continue to collaborate with various groups and even reach across borders — all to keep spreading the sound of praise rising from every people group and every generation.
+                </p>
+            </div>
+        </section>
+
+        <section>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-l-4 border-yellow-400 pl-3">Original Music & Worship</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/OQdIxR1w82U" title="WayWorship Video 1" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/aHIfz0ytWbY" title="WayWorship Video 2" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/baesdC_O_hw" title="WayWorship Video 3" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+                <div class="aspect-video w-full rounded-lg overflow-hidden shadow-md bg-gray-200">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/bSZj0m71Zgc" title="WayWorship Video 4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-xl md:text-2xl font-bold mb-2">JesuswayTaipei</h3>
+                <p class="text-gray-400 text-sm md:text-base">We look forward to meeting you</p>
+            </div>
+            <div class="text-gray-300 text-sm md:text-base space-y-2">
+                <p>📍 14F-1, No. 206, Songjiang Rd., Zhongshan Dist., Taipei</p>
+                <p>✉️ Email：<a href="mailto:jesuswaytaipei@gmail.com" class="hover:text-yellow-400 transition underline">jesuswaytaipei@gmail.com</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

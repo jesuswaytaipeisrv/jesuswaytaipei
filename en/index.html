@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="JesuswayTaipei — a church rooted in Taipei's young professional community, located on Songjiang Road, Zhongshan District.">
+    <meta property="og:title" content="JesuswayTaipei">
+    <meta property="og:description" content="A church rooted in Taipei's young professional community. Come and find out more about us.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://jesuswaytaipeisrv.github.io/jesuswaytaipei/assets/images/site_bkg.png">
+    <meta property="og:url" content="https://jesuswaytaipeisrv.github.io/jesuswaytaipei/en/">
+    <title>JesuswayTaipei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FAFAFA;
+            color: #333333;
+            overflow-wrap: break-word;
+        }
+        img, iframe {
+            max-width: 100%;
+            height: auto;
+        }
+        .hero-bg {
+           background: url('../assets/images/site_bkg.png') center/cover;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="index.html" class="text-xl md:text-2xl font-bold text-gray-800 tracking-wider">
+                        JesuswayTaipei <span class="text-xs md:text-sm font-normal text-gray-500">台北樣教會</span>
+                    </a>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="about.html" class="text-gray-600 hover:text-yellow-600 transition">About Us</a>
+                    <a href="sunday.html" class="text-gray-600 hover:text-yellow-600 transition">Sunday Messages</a>
+                    <a href="youth.html" class="text-gray-600 hover:text-yellow-600 transition">Youth Ministry</a>
+                    <a href="abbafood.html" class="text-gray-600 hover:text-yellow-600 transition">ABBAFOOD</a>
+                    <a href="worship.html" class="text-gray-600 hover:text-yellow-600 transition">WayWorship</a>
+                    <a href="creative.html" class="text-gray-600 hover:text-yellow-600 transition">Creative Events</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-yellow-600 transition">Contact</a>
+                    <a href="donate.html" class="text-gray-600 hover:text-yellow-600 transition">Donate</a>
+                    <a href="../index.html" class="text-xs border border-gray-400 text-gray-500 px-2 py-1 rounded hover:border-yellow-600 hover:text-yellow-600 transition">中文</a>
+                </div>
+
+                <div class="md:hidden flex items-center gap-3">
+                    <a href="../index.html" class="text-xs border border-gray-400 text-gray-500 px-2 py-1 rounded hover:border-yellow-600 hover:text-yellow-600 transition">中文</a>
+                    <button id="mobile-menu-button" class="text-gray-600 hover:text-gray-900 focus:outline-none">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full">
+            <div class="px-4 pt-2 pb-4 space-y-2 flex flex-col">
+                <a href="about.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">About Us</a>
+                <a href="sunday.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Sunday Messages</a>
+                <a href="youth.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Youth Ministry</a>
+                <a href="abbafood.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">ABBAFOOD</a>
+                <a href="worship.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">WayWorship</a>
+                <a href="creative.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Creative Events</a>
+                <a href="contact.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Contact</a>
+                <a href="donate.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Donate</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero-bg h-screen flex items-center justify-center pt-20">
+        <div class="text-center px-4">
+            <h1 class="text-4xl md:text-6xl font-bold text-gray-800 mb-6 drop-shadow-sm leading-tight">Welcome to<br class="md:hidden"> JesuswayTaipei</h1>
+            <p class="text-lg md:text-xl text-gray-700 mb-8 max-w-2xl mx-auto">In the warmth of wood and the scent of coffee,<br class="md:hidden"> experience genuine love and belonging.</p>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 space-y-20 md:space-y-24">
+
+        <section class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            <div class="w-full md:w-1/2">
+                <img src="../assets/images/youth02.jpg" alt="Youth Ministry" class="w-full aspect-video object-cover rounded-lg shadow-md">
+            </div>
+            <div class="w-full md:w-1/2">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-400 pl-4">Youth Ministry</h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    Youth Ministry is a gathering designed for the younger generation. Through faith sharing, life testimonies, and interactive discussions, we walk alongside young professionals in their faith journey. Click the button below to explore more photos and video highlights.
+                </p>
+                <a href="youth.html" class="inline-block border border-gray-800 text-gray-800 px-6 py-2 hover:bg-gray-800 hover:text-white transition duration-300 w-full md:w-auto text-center">Learn More</a>
+            </div>
+        </section>
+
+        <section class="flex flex-col md:flex-row-reverse items-center gap-8 md:gap-12">
+            <div class="w-full md:w-1/2">
+               <img src="../assets/images/abba02.jpg" alt="ABBAFOOD" class="w-full aspect-video object-cover rounded-lg shadow-md">
+            </div>
+            <div class="w-full md:w-1/2">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 border-l-4 border-green-500 pl-4">ABBAFOOD Workplace Book Club</h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    Coffee, notebooks, and workplace wisdom. We explore how to live out faith in the workplace, sharing each other's challenges and grace.
+                </p>
+                <a href="abbafood.html" class="inline-block border border-gray-800 text-gray-800 px-6 py-2 hover:bg-gray-800 hover:text-white transition duration-300 w-full md:w-auto text-center">Learn More</a>
+            </div>
+        </section>
+
+        <section class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+            <div class="w-full md:w-1/2">
+                <div class="aspect-video bg-gray-200 rounded-lg shadow-md flex items-center justify-center text-gray-500">
+                    [Worship team photo or YouTube video]
+                </div>
+            </div>
+            <div class="w-full md:w-1/2">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 border-l-4 border-yellow-400 pl-4">WayWorship</h2>
+                <p class="text-gray-600 leading-relaxed mb-6">
+                    Through music and worship, we long to lead people into the warmth and peace of God's presence. Find our latest worship videos and original compositions here.
+                </p>
+                <a href="worship.html" class="inline-block border border-gray-800 text-gray-800 px-6 py-2 hover:bg-gray-800 hover:text-white transition duration-300 w-full md:w-auto text-center">Listen</a>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-xl md:text-2xl font-bold mb-2">JesuswayTaipei</h3>
+                <p class="text-gray-400 text-sm md:text-base">We look forward to meeting you</p>
+            </div>
+            <div class="text-gray-300 text-sm md:text-base space-y-2">
+                <p>📍 14F-1, No. 206, Songjiang Rd., Zhongshan Dist., Taipei</p>
+                <p>✉️ Email：<a href="mailto:jesuswaytaipei@gmail.com" class="hover:text-yellow-400 transition underline">jesuswaytaipei@gmail.com</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>

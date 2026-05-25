@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="About JesuswayTaipei — founded in April 2015, a church rooted in Taipei's young professional community, helping people grow in faith and live fully.">
+    <meta property="og:title" content="About Us - JesuswayTaipei">
+    <meta property="og:description" content="Founded in April 2015, JesuswayTaipei is a church rooted in Taipei's young professional community, helping people grow in faith and live fully.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://jesuswaytaipeisrv.github.io/jesuswaytaipei/assets/images/site_bkg.png">
+    <meta property="og:url" content="https://jesuswaytaipeisrv.github.io/jesuswaytaipei/en/about.html">
+    <title>About Us - JesuswayTaipei</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #FAFAFA;
+            color: #333333;
+            overflow-wrap: break-word;
+        }
+        img, iframe {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <nav class="bg-white/90 backdrop-blur-md fixed w-full z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="index.html" class="text-xl md:text-2xl font-bold text-gray-800 tracking-wider">
+                        JesuswayTaipei <span class="text-xs md:text-sm font-normal text-gray-500">台北樣教會</span>
+                    </a>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="about.html" class="text-gray-600 hover:text-yellow-600 transition">About Us</a>
+                    <a href="sunday.html" class="text-gray-600 hover:text-yellow-600 transition">Sunday Messages</a>
+                    <a href="youth.html" class="text-gray-600 hover:text-yellow-600 transition">Youth Ministry</a>
+                    <a href="abbafood.html" class="text-gray-600 hover:text-yellow-600 transition">ABBAFOOD</a>
+                    <a href="worship.html" class="text-gray-600 hover:text-yellow-600 transition">WayWorship</a>
+                    <a href="creative.html" class="text-gray-600 hover:text-yellow-600 transition">Creative Events</a>
+                    <a href="contact.html" class="text-gray-600 hover:text-yellow-600 transition">Contact</a>
+                    <a href="donate.html" class="text-gray-600 hover:text-yellow-600 transition">Donate</a>
+                    <a href="../about.html" class="text-xs border border-gray-400 text-gray-500 px-2 py-1 rounded hover:border-yellow-600 hover:text-yellow-600 transition">中文</a>
+                </div>
+
+                <div class="md:hidden flex items-center gap-3">
+                    <a href="../about.html" class="text-xs border border-gray-400 text-gray-500 px-2 py-1 rounded hover:border-yellow-600 hover:text-yellow-600 transition">中文</a>
+                    <button id="mobile-menu-button" class="text-gray-600 hover:text-gray-900 focus:outline-none">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 shadow-lg absolute w-full">
+            <div class="px-4 pt-2 pb-4 space-y-2 flex flex-col">
+                <a href="about.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">About Us</a>
+                <a href="sunday.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Sunday Messages</a>
+                <a href="youth.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Youth Ministry</a>
+                <a href="abbafood.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">ABBAFOOD</a>
+                <a href="worship.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">WayWorship</a>
+                <a href="creative.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Creative Events</a>
+                <a href="contact.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Contact</a>
+                <a href="donate.html" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-yellow-600 hover:bg-gray-50 rounded-md">Donate</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="pt-28 md:pt-32 pb-10 md:pb-12 bg-gray-50 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">About Us</h1>
+            <p class="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">Living life more authentically and freely</p>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 space-y-16">
+
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            <div class="flex flex-col items-center">
+                <img src="../assets/images/ab01.jpg" alt="Life together" class="w-full aspect-square object-cover rounded-full shadow-md border-4 border-white">
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="../assets/images/ab02.jpg" alt="Workplace wisdom" class="w-full aspect-square object-cover rounded-full shadow-md border-4 border-white">
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="../assets/images/ab03.jpg" class="w-full aspect-square object-cover rounded-full shadow-md border-4 border-white">
+            </div>
+            <div class="flex flex-col items-center">
+                <img src="../assets/images/ab04.jpg" alt="Life growth" class="w-full aspect-square object-cover rounded-full shadow-md border-4 border-white">
+            </div>
+        </section>
+
+        <section class="bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
+
+            <div class="text-gray-700 leading-relaxed space-y-6 md:text-lg mb-10">
+                <p>
+                    JesuswayTaipei was founded in April 2015 as a church centered on Taipei's young working generation. In a rapidly changing world shaped by AI and constant disruption, we help people build a relationship with God and pursue whole-person health — in body, mind, and spirit — while also caring about the individual struggles, choices, and growth that people face every day.
+                </p>
+                <p>
+                    Especially when it comes to career, relationships, and life direction, we want to help young people discover their gifts and understand their role in God's kingdom.
+                </p>
+                <p class="font-bold text-gray-800 text-xl border-l-4 border-yellow-400 pl-4 py-1">
+                    We believe faith shouldn't stay locked inside Sunday mornings — it should walk into every day of life.
+                </p>
+                <p>So here, you'll gradually discover:</p>
+            </div>
+
+            <div class="space-y-6 mb-10 pl-2 md:pl-6">
+                <div class="flex items-start gap-4">
+                    <span class="text-yellow-500 font-bold text-xl mt-1">✓</span>
+                    <p class="text-gray-700 leading-relaxed md:text-lg">
+                        <strong class="text-gray-900 font-bold">A new understanding of the connection between faith and everyday life</strong><br>
+                        God's word and presence become not just doctrine, but a living strength that accompanies every decision you make.
+                    </p>
+                </div>
+                <div class="flex items-start gap-4">
+                    <span class="text-yellow-500 font-bold text-xl mt-1">✓</span>
+                    <p class="text-gray-700 leading-relaxed md:text-lg">
+                        <strong class="text-gray-900 font-bold">Wisdom and skills you can actually apply in the workplace</strong><br>
+                        Find direction and purpose amid the challenges and pressures of work.
+                    </p>
+                </div>
+                <div class="flex items-start gap-4">
+                    <span class="text-yellow-500 font-bold text-xl mt-1">✓</span>
+                    <p class="text-gray-700 leading-relaxed md:text-lg">
+                        <strong class="text-gray-900 font-bold">Relationships where you feel truly understood and accompanied</strong><br>
+                        Even in imperfection, you are accepted and can grow together with others.
+                    </p>
+                </div>
+                <div class="flex items-start gap-4">
+                    <span class="text-yellow-500 font-bold text-xl mt-1">✓</span>
+                    <p class="text-gray-700 leading-relaxed md:text-lg">
+                        <strong class="text-gray-900 font-bold">A way to share joy with those around you</strong><br>
+                        Pass on to others the good things you have learned and experienced through your own life transformation.
+                    </p>
+                </div>
+            </div>
+
+            <div class="text-gray-700 leading-relaxed space-y-6 md:text-lg text-center mt-12 pt-8 border-t border-gray-100">
+                <p>
+                    We are a community of people still learning — regardless of background or stage of life — connecting with and supporting one another as we live more authentically and freely together.
+                </p>
+                <p class="font-bold text-gray-800 text-xl">
+                    May everyone who walks into JesuswayTaipei slowly find their place here, experience abundance and renewal, and boldly live as the most beautiful version of themselves that God created.
+                </p>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-6">
+            <div>
+                <h3 class="text-xl md:text-2xl font-bold mb-2">JesuswayTaipei</h3>
+                <p class="text-gray-400 text-sm md:text-base">We look forward to meeting you</p>
+            </div>
+            <div class="text-gray-300 text-sm md:text-base space-y-2">
+                <p>📍 14F-1, No. 206, Songjiang Rd., Zhongshan Dist., Taipei</p>
+                <p>✉️ Email：<a href="mailto:jesuswaytaipei@gmail.com" class="hover:text-yellow-400 transition underline">jesuswaytaipei@gmail.com</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const btn = document.getElementById('mobile-menu-button');
+        const menu = document.getElementById('mobile-menu');
+
+        btn.addEventListener('click', () => {
+            menu.classList.toggle('hidden');
+        });
+    </script>
+</body>
+</html>
