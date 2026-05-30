@@ -33,6 +33,25 @@
 
 ---
 
+## 自動化
+
+| 腳本 | 說明 |
+|------|------|
+| `update_sunday.py` | 每週四 21:00 自動抓最新主日信息、更新表格、git commit |
+
+- launchd 服務：`com.jesusway.update-sunday`（電腦關機時錯過，開機後補跑）
+- 執行後用 **GitHub Desktop 手動 push**
+- Log：`logs/update_sunday.log`
+
+---
+
+## 維護規則
+
+1. 每次修改後，中文版（根目錄）與英文版（`en/`）必須同步
+2. 每次修改後確認 RWD（手機與桌機版面）
+
+---
+
 ## 資安原則
 
 | 風險 | 規範 |
