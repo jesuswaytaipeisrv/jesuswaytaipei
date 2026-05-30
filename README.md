@@ -37,8 +37,9 @@
 
 | 腳本 | 說明 |
 |------|------|
-| `update_sunday.py` | 每週四 21:00 自動抓最新主日信息、更新表格、git commit |
+| `update_sunday.py` | 每週四 21:00 自動抓最新主日信息與樣青講堂、更新表格、git commit |
 
+- 一次執行同時更新 `sunday.html`、`en/sunday.html`、`youth.html`、`en/youth.html`（各維持10筆）
 - launchd 服務：`com.jesusway.update-sunday`（電腦關機時錯過，開機後補跑）
 - 執行後用 **GitHub Desktop 手動 push**
 - Log：`logs/update_sunday.log`
