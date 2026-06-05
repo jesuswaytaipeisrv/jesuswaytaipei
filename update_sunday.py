@@ -51,42 +51,75 @@ def load_env():
 # ── YouTube 抓取（一次掃描同時找主日與樣青）────────────────────────────
 def fetch_latest_streams(max_items=25):
     """
-    抓最新 max_items 筆直播，一次掃描回傳：
+    一次 flat-playlist 取 ID + 標題，用關鍵字篩選後，
+    只對符合的影片做個別抓取（取 upload_date）。
+    回傳：
       latest_sunday: (date_fmt, raw_title, video_id) 或 None
       latest_youth:  (date_fmt, raw_title, video_id) 或 None
     """
-    logging.info("抓取 YouTube 頻道直播列表")
+    logging.info("抓取 YouTube 頻道影片列表（一次取 ID + 標題）")
     r = subprocess.run(
         ["yt-dlp", "--flat-playlist", "--playlist-end", str(max_items),
-         "--print", "%(id)s", CHANNEL_URL],
+         "--print", "%(id)s	%(title)s", CHANNEL_URL],
         capture_output=True, text=True, timeout=60
     )
-    ids = [i.strip() for i in r.stdout.strip().split("\n") if i.strip()]
+    if r.returncode != 0:
+        logging.error(f"yt-dlp flat-playlist 失敗：{r.stderr.strip()[:200]}")
+        return None, None
+
+    entries = []
+    for line in r.stdout.strip().split("\n"):
+        line = line.strip()
+        if "\t" not in line:
+            continue
+        vid, title = line.split("\t", 1)
+        entries.append((vid.strip(), title.strip()))
+
+    logging.info(f"取得 {len(entries)} 筆影片")
+
+    sunday_candidate = None
+    youth_candidate  = None
+    for vid, title in entries:
+        if sunday_candidate and youth_candidate:
+            break
+        if "樣青講堂" in title and youth_candidate is None:
+            youth_candidate = (vid, title)
+        elif "主日" in title and "樣青講堂" not in title and sunday_candidate is None:
+            sunday_candidate = (vid, title)
+
+    def fetch_date(vid):
+        """個別抓取上傳日期，失敗時回傳 None"""
+        r2 = subprocess.run(
+            ["yt-dlp", "--skip-download", "--print", "%(upload_date)s",
+             f"https://www.youtube.com/watch?v={vid}"],
+            capture_output=True, text=True, timeout=30
+        )
+        date_str = r2.stdout.strip()
+        if len(date_str) != 8 or not date_str.isdigit():
+            logging.error(f"無法取得 {vid} 的上傳日期，yt-dlp 回傳：{repr(date_str)}")
+            return None
+        return f"{date_str[:4]}.{date_str[4:6]}.{date_str[6:8]}"
 
     latest_sunday = None
     latest_youth  = None
 
-    for vid in ids:
-        if latest_sunday and latest_youth:
-            break
-        r = subprocess.run(
-            ["yt-dlp", "--skip-download", "--print", "%(upload_date)s|%(title)s",
-             f"https://www.youtube.com/watch?v={vid}"],
-            capture_output=True, text=True, timeout=30
-        )
-        line = r.stdout.strip()
-        if "|" not in line:
-            continue
-        date_str, title = line.split("|", 1)
-        date_fmt = f"{date_str[:4]}.{date_str[4:6]}.{date_str[6:8]}"
-        title = title.strip()
-
-        if "樣青講堂" in title and latest_youth is None:
-            logging.info(f"最新樣青講堂：{date_fmt} | {title[:40]}")
-            latest_youth = (date_fmt, title, vid)
-        elif "主日" in title and "樣青講堂" not in title and latest_sunday is None:
+    if sunday_candidate:
+        vid, title = sunday_candidate
+        date_fmt = fetch_date(vid)
+        if date_fmt:
             logging.info(f"最新主日信息：{date_fmt} | {title[:40]}")
             latest_sunday = (date_fmt, title, vid)
+        else:
+            logging.warning("主日信息取得日期失敗")
+
+    if youth_candidate:
+        vid, title = youth_candidate
+        date_fmt = fetch_date(vid)
+        if date_fmt:
+            logging.info(f"最新樣青講堂：{date_fmt} | {title[:40]}")
+            latest_youth = (date_fmt, title, vid)
+        else:
+            logging.warning("樣青講堂取得日期失敗")
 
     if not latest_sunday:
         logging.warning("找不到新的主日信息")
