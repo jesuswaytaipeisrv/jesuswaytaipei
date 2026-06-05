@@ -160,14 +160,13 @@ def parse_youth_title_guest(raw_title):
 def translate_to_english(zh_title, zh_person, context="主日信息"):
     """用 Gemini 翻譯標題與人名，失敗回傳 (None, None)"""
     try:
-        import google.generativeai as genai
-        api_key = os.environ.get("GEMINI_API_KEY", "")
+        from google import genai
+        api_key = os.environ.get("GOOGLE_API_KEY", "")
         if not api_key:
-            logging.warning("GEMINI_API_KEY 未設定，跳過翻譯")
+            logging.warning("GOOGLE_API_KEY 未設定，跳過翻譯")
             return None, None
 
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        client = genai.Client(api_key=api_key)
 
         if context == "主日信息":
             key2 = "speaker"
@@ -186,7 +185,7 @@ def translate_to_english(zh_title, zh_person, context="主日信息"):
                 f"來賓：{zh_person}"
             )
 
-        resp = model.generate_content(prompt)
+        resp = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
         text = re.sub(r"```json|```", "", resp.text).strip()
         data = json.loads(text)
         return data.get("title", ""), data.get(key2, "")
