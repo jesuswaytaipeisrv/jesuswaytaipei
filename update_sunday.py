@@ -133,10 +133,17 @@ def parse_sunday_title_speaker(raw_title):
     raw = re.sub(r"#\S+", "", raw_title).strip()
     parts = [p.strip() for p in raw.split("|") if p.strip()]
 
+    # 去除雜訊關鍵字本身，保留段落中的剩餘文字（例如「台北樣教會 吳必然 牧師」→「吳必然 牧師」）
     noise_keywords = ["台北樣線上主日", "台北樣教會", "台北樣"]
-    clean = [p for p in parts if not any(n in p for n in noise_keywords)]
+    def strip_noise(text):
+        for kw in noise_keywords:
+            text = text.replace(kw, "")
+        return re.sub(r"\s{2,}", " ", text).strip()
 
-    title = re.sub(r"\s{2,}", " ", clean[0]).strip() if clean else raw
+    clean = [strip_noise(p) for p in parts]
+    clean = [p for p in clean if p]  # 去除空段落
+
+    title = clean[0] if clean else raw
     speaker = ""
     if len(clean) > 1:
         speaker = re.sub(r"（.*?）|\(.*?\)", "", clean[-1]).strip()

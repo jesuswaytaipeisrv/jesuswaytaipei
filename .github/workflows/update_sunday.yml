@@ -4,7 +4,7 @@ on:
   schedule:
     # 每週四 13:00 UTC = 21:00 UTC+8
     - cron: '0 13 * * 4'
-  workflow_dispatch:  # 允許手動觸發（測試用）
+  workflow_dispatch:
 
 jobs:
   update:
@@ -22,8 +22,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: |
-          pip install yt-dlp google-generativeai
+        run: pip install yt-dlp google-genai
 
       - name: Configure git
         run: |
@@ -38,13 +37,43 @@ jobs:
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           WEBSITE_DIR: ${{ github.workspace }}
-        run: |
-          python update_sunday.py
+        run: python update_sunday.py
 
-      - name: Report result
+      - name: Check for changes and build email body
+        id: check
         run: |
-          if [ "${{ steps.pre.outputs.sha }}" != "$(git rev-parse HEAD)" ]; then
+          CURRENT_SHA=$(git rev-parse HEAD)
+          if [ "${{ steps.pre.outputs.sha }}" != "$CURRENT_SHA" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            COMMIT_MSG=$(git log -1 --pretty=%B)
+            echo "commit_msg<<MSGEOF" >> $GITHUB_OUTPUT
+            echo "$COMMIT_MSG" >> $GITHUB_OUTPUT
+            echo "MSGEOF" >> $GITHUB_OUTPUT
             echo "✅ 網頁已更新並 push"
           else
+            echo "changed=false" >> $GITHUB_OUTPUT
             echo "ℹ️ 無新內容，本週已是最新"
           fi
+
+      - name: Send email notification
+        if: steps.check.outputs.changed == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: jesuswaytaipeisrv@gmail.com
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "【台北樣教會】網站自動更新通知"
+          to: jesuswaytaipeisrv@gmail.com
+          from: 台北樣教會自動排程 <jesuswaytaipeisrv@gmail.com>
+          body: |
+            台北樣教會網站已完成本週自動更新。
+
+            ${{ steps.check.outputs.commit_msg }}
+
+            ──────────────────────────
+            主日信息：https://jesuswaytaipeisrv.github.io/jesuswaytaipei/sunday.html
+            樣青講堂：https://jesuswaytaipeisrv.github.io/jesuswaytaipei/youth.html
+            ──────────────────────────
+            此信由 GitHub Actions 自動發送，請勿直接回覆。
