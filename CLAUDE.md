@@ -92,3 +92,31 @@
 
 ### 待辦
 - `abbafood.html`：3 張據點卡片圖片仍用 Unsplash 占位（東興/南軟/慕美學），等使用者提供實際照片
+
+---
+
+## 本次修改記錄（2026-06-05）
+
+### 新增
+- `.github/workflows/update_sunday.yml`：GitHub Actions 排程，每週四 13:00 UTC（= 21:00 UTC+8）自動觸發
+  - 安裝 `yt-dlp`、`google-generativeai`
+  - 注入 `GEMINI_API_KEY`（GitHub repo secret）
+  - script 執行後自動 `git push`，不再依賴 GitHub Desktop
+
+### 修改
+- `update_sunday.py`：支援 CI 環境執行
+  - `WEBSITE_DIR`：支援環境變數覆蓋（GitHub Actions 注入 `github.workspace`）
+  - `setup_logging()`：CI 環境只輸出 stdout，不寫本機 log 檔
+  - `load_env()`：CI 環境（`GITHUB_ACTIONS=true`）跳過讀取本機 `.env`
+  - `git_commit()`：CI 環境執行完 commit 後自動 `git push`
+
+### 排程現況
+| 環境 | 觸發方式 | Push 方式 |
+|------|----------|-----------|
+| 本機 | launchd 每週四 21:00 | GitHub Desktop 手動 |
+| GitHub Actions | cron 每週四 13:00 UTC | 自動 push |
+
+> 兩者邏輯一致，script 用 `GITHUB_ACTIONS` 環境變數區分行為。
+
+### 待辦
+- `abbafood.html`：3 張據點卡片圖片仍用 Unsplash 占位（東興/南軟/慕美學），等使用者提供實際照片
