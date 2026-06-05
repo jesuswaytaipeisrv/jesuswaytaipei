@@ -151,3 +151,12 @@
 |--------|------|
 | `GOOGLE_API_KEY` | Gemini 翻譯（gemini-2.5-flash） |
 | `GMAIL_APP_PASSWORD` | Gmail SMTP 發信授權 |
+
+---
+
+## 補充說明（2026-06-05）
+
+### 英文翻譯歷史
+- 表格初始 10 筆（2026.03.01 ~ 2026.05.17）：由前次對話 Claude 直接翻譯後手寫入 HTML，**未使用 Gemini**
+- `update_sunday.py` 的 Gemini 翻譯功能自建立起即故障（API key 名稱不符 + 套件未安裝），首次自動新增的 2026.05.31 因此用中文暫代
+- 本次修復後，往後每週自動新增的筆數才真正走 Gemini（gemini-2.5-flash）翻譯
