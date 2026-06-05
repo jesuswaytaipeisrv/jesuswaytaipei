@@ -120,3 +120,34 @@
 
 ### 待辦
 - `abbafood.html`：3 張據點卡片圖片仍用 Unsplash 占位（東興/南軟/慕美學），等使用者提供實際照片
+
+---
+
+## 本次修改記錄（2026-06-05，第二次）
+
+### 問題修復
+
+#### 1. fetch_latest_streams() 抓取不穩定
+- **原因：** 逐一對每支影片跑 yt-dlp 取 metadata，遇網路延遲/YouTube 限速時回傳空值被跳過
+- **修法：** 改為一次 flat-playlist 取 ID + 標題，關鍵字篩選後僅對符合的 1~2 支影片抓日期，API 呼叫從最多 25 次降為 2 次
+
+#### 2. 翻譯從未成功（長期存在）
+- **原因：** script 用 `GEMINI_API_KEY`，.env 實際是 `GOOGLE_API_KEY`；且 `google-generativeai` 套件已棄用，`gemini-2.0-flash` 模型已下架
+- **修法：** 改用 `google-genai` 新套件 + `GOOGLE_API_KEY` + `gemini-2.5-flash`
+
+#### 3. 講員解析邏輯錯誤
+- **原因：** `parse_sunday_title_speaker` 把含雜訊關鍵字的整段過濾掉，導致「台北樣教會 吳必然 牧師」整段消失
+- **修法：** 改為從段落中去除關鍵字文字、保留剩餘內容（「台北樣教會 吳必然 牧師」→「吳必然 牧師」）
+- **補救：** 手動修正 sunday.html / en/sunday.html 2026.05.31 講員欄位
+
+### 新增功能
+- **GitHub Actions 郵件通知：** 排程執行完畢且有更新時，自動寄信至 `jesuswaytaipeisrv@gmail.com`
+  - 使用 `dawidd6/action-send-mail@v3`，走 Gmail SMTP（port 465）
+  - 信件內容：更新摘要（git commit message）+ 主日/樣青網頁連結
+  - 需 GitHub Secret：`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼，非登入密碼）
+
+### GitHub Secrets 一覽（截至本次）
+| Secret | 用途 |
+|--------|------|
+| `GOOGLE_API_KEY` | Gemini 翻譯（gemini-2.5-flash） |
+| `GMAIL_APP_PASSWORD` | Gmail SMTP 發信授權 |
