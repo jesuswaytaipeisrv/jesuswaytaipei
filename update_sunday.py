@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 update_sunday.py
-每週四 21:00 由 launchd 自動執行，更新台北樣教會主日信息與樣青講堂表格。
-電腦關機時錯過排程，開機後 launchd 會補跑一次。
+每週四 21:00 觸發（本機：launchd；CI：GitHub Actions），更新台北樣教會主日信息與樣青講堂表格。
 """
 
 import os
@@ -16,23 +15,30 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 # ── 設定 ──────────────────────────────────────────────────────────────
-WEBSITE_DIR  = Path.home() / "documents" / "website"
+WEBSITE_DIR  = Path(os.environ["WEBSITE_DIR"]) if "WEBSITE_DIR" in os.environ else Path.home() / "documents" / "website"
 LOG_FILE     = WEBSITE_DIR / "logs" / "update_sunday.log"
 ENV_FILE     = Path.home() / ".hermes" / ".env"
 CHANNEL_URL  = "https://www.youtube.com/@JesuswayTaipei/streams"
 
 # ── Logging ───────────────────────────────────────────────────────────
 def setup_logging():
-    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
-    fh = RotatingFileHandler(LOG_FILE, maxBytes=5*1024*1024, backupCount=5, encoding="utf-8")
-    fh.setFormatter(fmt)
     sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(fmt)
-    logging.basicConfig(level=logging.INFO, handlers=[fh, sh])
+    handlers = [sh]
+    # 本機才寫 log 檔；CI 環境（GITHUB_ACTIONS）只輸出 stdout
+    if not os.environ.get("GITHUB_ACTIONS"):
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        fh = RotatingFileHandler(LOG_FILE, maxBytes=5*1024*1024, backupCount=5, encoding="utf-8")
+        fh.setFormatter(fmt)
+        handlers.append(fh)
+    logging.basicConfig(level=logging.INFO, handlers=handlers)
 
 # ── 環境變數 ──────────────────────────────────────────────────────────
 def load_env():
+    # CI 環境由 GitHub Actions secrets 注入，不需讀本機 .env
+    if os.environ.get("GITHUB_ACTIONS"):
+        return
     if not ENV_FILE.exists():
         return
     with open(ENV_FILE) as f:
@@ -202,6 +208,9 @@ def git_commit(updated_files, commit_msg):
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "add"] + updated_files, check=True)
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "commit", "-m", commit_msg], check=True)
     logging.info(f"git commit：{commit_msg}")
+    if os.environ.get("GITHUB_ACTIONS"):
+        subprocess.run(["git", "-C", str(WEBSITE_DIR), "push"], check=True)
+        logging.info("git push 完成")
 
 # ── 主流程 ────────────────────────────────────────────────────────────
 def main():
@@ -268,7 +277,10 @@ def main():
     if updated_files:
         msg = "feat: 自動更新 " + "、".join(commit_parts)
         git_commit(updated_files, msg)
-        logging.info("=== 完成，請用 GitHub Desktop push ===")
+        if os.environ.get("GITHUB_ACTIONS"):
+            logging.info("=== 完成，已自動 push ===")
+        else:
+            logging.info("=== 完成，請用 GitHub Desktop push ===")
     else:
         logging.info("=== 無更新，結束 ===")
 

@@ -1,0 +1,50 @@
+name: 自動更新主日信息與樣青講堂
+
+on:
+  schedule:
+    # 每週四 13:00 UTC = 21:00 UTC+8
+    - cron: '0 13 * * 4'
+  workflow_dispatch:  # 允許手動觸發（測試用）
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install yt-dlp google-generativeai
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Record initial commit SHA
+        id: pre
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Run update script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WEBSITE_DIR: ${{ github.workspace }}
+        run: |
+          python update_sunday.py
+
+      - name: Report result
+        run: |
+          if [ "${{ steps.pre.outputs.sha }}" != "$(git rev-parse HEAD)" ]; then
+            echo "✅ 網頁已更新並 push"
+          else
+            echo "ℹ️ 無新內容，本週已是最新"
+          fi
