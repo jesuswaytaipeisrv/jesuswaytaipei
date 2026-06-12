@@ -95,6 +95,25 @@
 
 ---
 
+## 本次修改記錄（2026-06-12）
+
+### 文字修改
+- `en/*.html`（全站 9 個英文頁面）：導覽列「Youth Ministry」一律改為「JesusWay Forum」（32 處）
+- `en/sunday.html`：講員吳必然英文統一為「Pastor Pijan Wu」（共 6 處，修正 Wu Biran / Wu Pi-Jan 兩種錯誤寫法）
+- `en/donate.html`：Account Name 由「Taiwan Jesusway Holistic Development Association」改為「社團法人台灣樣全人發展協會」（含 meta description / og:description，共 3 處）
+
+### 新增
+- `assets/images/logo.jpg`：教會 logo 圖示（17KB）
+- 全站 18 個頁面（9 中文 + 9 英文）導覽列品牌區加入 logo 圖，位置在「台北樣教會 JesuswayTaipei」文字左側，`h-10 w-auto`，flex 排版垂直置中
+
+### 講員翻譯規則（已儲存至 Claude 記憶）
+- 吳必然 → **Pastor Pijan Wu**（不用 Wu Biran / Wu Pi-Jan）
+
+### 待辦
+- 無
+
+---
+
 ## 本次修改記錄（2026-06-07）
 
 ### 文字修改

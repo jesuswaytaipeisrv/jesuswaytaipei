@@ -48,6 +48,18 @@
 
 ---
 
+## 設計規範
+
+| 項目 | 規格 |
+|------|------|
+| Navbar logo | `assets/images/logo.jpg`，`h-10 w-auto`，文字左側 flex 排版 |
+| 英文頁 Navbar logo 路徑 | `../assets/images/logo.jpg` |
+| 英文導覽列：樣青 | JesusWay Forum（非 Youth Ministry） |
+| 講員吳必然英文 | Pastor Pijan Wu（非 Wu Biran / Wu Pi-Jan） |
+| 奉獻帳戶名稱 | 社團法人台灣樣全人發展協會（中文正式名，不翻英文） |
+
+---
+
 ## 維護規則
 
 1. 每次修改後，中文版（根目錄）與英文版（`en/`）必須同步
