@@ -88,12 +88,16 @@ def fetch_latest_streams(max_items=25):
             sunday_candidate = (vid, title)
 
     def fetch_date(vid):
-        """個別抓取上傳日期，失敗時回傳 None"""
-        r2 = subprocess.run(
-            ["yt-dlp", "--skip-download", "--print", "%(upload_date)s",
-             f"https://www.youtube.com/watch?v={vid}"],
-            capture_output=True, text=True, timeout=30
-        )
+        """個別抓取上傳日期，失敗或逾時時回傳 None"""
+        try:
+            r2 = subprocess.run(
+                ["yt-dlp", "--skip-download", "--print", "%(upload_date)s",
+                 f"https://www.youtube.com/watch?v={vid}"],
+                capture_output=True, text=True, timeout=30
+            )
+        except subprocess.TimeoutExpired:
+            logging.error(f"yt-dlp 取得 {vid} 日期逾時（>30s）")
+            return None
         date_str = r2.stdout.strip()
         if len(date_str) != 8 or not date_str.isdigit():
             logging.error(f"無法取得 {vid} 的上傳日期，yt-dlp 回傳：{repr(date_str)}")
@@ -218,8 +222,10 @@ def build_row(date, title, person, video_id, watch_label="觀看 →"):
 def is_video_in_table(html_path, video_id):
     return video_id in html_path.read_text(encoding="utf-8")
 
+MAX_ROWS = 10
+
 def update_table(html_path, new_row):
-    """在 tbody 頂端插入新行，移除最後一行（維持10筆）"""
+    """在 tbody 頂端插入新行，超過 MAX_ROWS 筆才移除最後一行"""
     content = html_path.read_text(encoding="utf-8")
 
     marker = '<tbody class="bg-white divide-y divide-gray-100">'
@@ -230,13 +236,18 @@ def update_table(html_path, new_row):
     insert_pos = content.find("\n", pos) + 1
     content = content[:insert_pos] + new_row + content[insert_pos:]
 
-    last_end = content.rfind("</tr>") + len("</tr>")
-    last_start = content.rfind('<tr class="hover:bg-yellow-50 transition">', 0, last_end)
-    if last_start == -1:
-        logging.error(f"找不到最後一個 <tr>：{html_path.name}")
-        return False
-    nl_before = content.rfind("\n", 0, last_start)
-    content = content[:nl_before] + content[last_end:]
+    # 插入後計算目前筆數，只在超過上限時才移除最後一筆
+    row_tag = '<tr class="hover:bg-yellow-50 transition">'
+    row_count = content.count(row_tag)
+    if row_count > MAX_ROWS:
+        last_end = content.rfind("</tr>") + len("</tr>")
+        last_start = content.rfind(row_tag, 0, last_end)
+        if last_start == -1:
+            logging.error(f"找不到最後一個 <tr>：{html_path.name}")
+            return False
+        nl_before = content.rfind("\n", 0, last_start)
+        content = content[:nl_before] + content[last_end:]
+        logging.info(f"表格已達 {row_count} 筆，移除最後一筆")
 
     html_path.write_text(content, encoding="utf-8")
     logging.info(f"已更新：{html_path.name}")
@@ -279,9 +290,12 @@ def main():
                 title_en, speaker_en = title_zh, speaker_zh
                 logging.warning("主日英文版暫用中文標題，請 push 前手動確認")
 
-            update_table(sunday_zh, build_row(date, title_zh, speaker_zh, video_id, "觀看 →"))
-            update_table(WEBSITE_DIR / "en" / "sunday.html",
-                         build_row(date, title_en, speaker_en, video_id, "Watch →"))
+            ok_zh = update_table(sunday_zh, build_row(date, title_zh, speaker_zh, video_id, "觀看 →"))
+            ok_en = update_table(WEBSITE_DIR / "en" / "sunday.html",
+                                 build_row(date, title_en, speaker_en, video_id, "Watch →"))
+            if not ok_zh or not ok_en:
+                logging.error("主日信息更新失敗，略過 commit")
+                return
 
             updated_files += ["sunday.html", "en/sunday.html"]
             note = "（英文暫用中文）" if en_fallback else ""
@@ -304,9 +318,12 @@ def main():
                 title_en, guest_en = title_zh, guest_zh
                 logging.warning("樣青英文版暫用中文，請 push 前手動確認")
 
-            update_table(youth_zh, build_row(date, title_zh, guest_zh, video_id, "觀看 →"))
-            update_table(WEBSITE_DIR / "en" / "youth.html",
-                         build_row(date, title_en, guest_en, video_id, "Watch →"))
+            ok_zh = update_table(youth_zh, build_row(date, title_zh, guest_zh, video_id, "觀看 →"))
+            ok_en = update_table(WEBSITE_DIR / "en" / "youth.html",
+                                 build_row(date, title_en, guest_en, video_id, "Watch →"))
+            if not ok_zh or not ok_en:
+                logging.error("樣青講堂更新失敗，略過 commit")
+                return
 
             updated_files += ["youth.html", "en/youth.html"]
             note = "（英文暫用中文）" if en_fallback else ""
