@@ -95,6 +95,20 @@
 
 ---
 
+## 本次修改記錄（2026-06-12，第二次）
+
+### Bug 修正（update_sunday.py）
+
+經 DeepSeek V4 Pro code review 發現並修正三個問題：
+
+| 問題 | 修法 |
+|------|------|
+| `fetch_date` 呼叫 yt-dlp 逾時時未捕捉 `TimeoutExpired`，整個腳本會 crash | 加 `try/except TimeoutExpired`，逾時改為回傳 `None` |
+| `update_table` 無條件刪最後一筆，表格筆數不滿 10 時會誤刪資料 | 插入後計算筆數，超過 `MAX_ROWS=10` 才刪 |
+| `main()` 忽略 `update_table` 回傳值，更新失敗仍繼續 git commit | 接收回傳值，失敗時 `return` 中止，不 commit 損壞檔案 |
+
+---
+
 ## 本次修改記錄（2026-06-12）
 
 ### 文字修改
