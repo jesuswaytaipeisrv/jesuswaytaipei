@@ -76,6 +76,23 @@
 
 ---
 
+## 本次修改記錄（2026-06-15）
+
+### 圖片格式升級：WebP
+
+- 全站 34 張照片（`.jpg`）轉換為 WebP 格式（品質 85），平均縮小 55~70%
+- 中英文 18 個 HTML 頁面，所有 `<img>` 圖片標籤（共 72 個）改以 `<picture>` 包裝：
+  - 現代瀏覽器自動讀取 `.webp`；舊瀏覽器退回 `.jpg` fallback
+  - logo.jpg / favicon 未變更（非照片，原本即小檔）
+- 轉換工具：`ffmpeg -c:v libwebp -quality 85`
+- 備份：轉換前原始 JPG 備份至 `~/documents/網站備份/images_backup_20260615/`
+- Hero 背景圖（`assets/images/site_bkg.png`）為 PNG，**本次未異動**
+
+### 注意事項
+- `update_sunday.py` 只更新表格文字，不觸及 `<img>` 標籤，WebP 包裝不受排程影響
+
+---
+
 ## 本次修改記錄（2026-05-30）
 
 ### 新增

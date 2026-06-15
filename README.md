@@ -48,6 +48,18 @@
 
 ---
 
+## 圖片規範
+
+| 項目 | 規格 |
+|------|------|
+| 格式 | WebP（主）+ JPG（fallback），以 `<picture>` 標籤包裝 |
+| WebP 品質 | 85（ffmpeg libwebp） |
+| 解析度 | 1920px 寬（標準），Hero 背景 `site_bkg.png` 為 PNG 不變 |
+| 備份位置 | `~/documents/網站備份/images_backup_20260615/`（2026-06-15 轉換前備份） |
+| 還原指令 | `cp -r ~/documents/網站備份/images_backup_20260615/* ~/documents/website/assets/images/` |
+
+---
+
 ## 設計規範
 
 | 項目 | 規格 |
