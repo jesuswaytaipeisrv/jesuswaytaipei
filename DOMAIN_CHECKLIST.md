@@ -28,10 +28,12 @@
 - [x] 驗證 DNS 已生效（任一）：
   - 終端機：`dig +short www.jesuswaytaipei.org`　應回傳 `jesuswaytaipeisrv.github.io`
   - 或上 https://dnschecker.org 查 `www.jesuswaytaipei.org`（CNAME）
-- [ ] DNS 生效後再 push（含全站網址置換 + 本文件）：
+- [x] DNS 生效後再 push（含全站網址置換 + 本文件）：commit `8a85604`，2026-06-17 已 push
   ```bash
   cd ~/Documents/Claude/Projects/jesuswaytaipei && git push
   ```
+  > 現況：push 後 GitHub Pages 已用自訂網域以 **HTTP** 正常服務（`curl -I http://www.jesuswaytaipei.org` 回 200）。
+  > HTTPS 憑證尚未簽發，待 STEP 4 在後台設定 Custom domain、通過 DNS check 後自動發。
 
 ## STEP 4：在 GitHub 綁定自訂網域
 
