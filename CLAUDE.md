@@ -84,10 +84,13 @@
 - 新增 `DOMAIN_SETUP.md`（兩階段網域規劃）、`DOMAIN_CHECKLIST.md`（STEP 1–6 操作清單）
 - 已 commit + push（`829478e`）。GitHub Pages 已用自訂網域以 **HTTP 正常服務**（curl 回 200）
 
-### 待辦（須手動於 GitHub 網頁操作，本機無 gh CLI）
-- Repo → Settings → Pages → Custom domain 填 `www.jesuswaytaipei.org` → Save → 等 DNS check 綠勾
-- 勾 **Enforce HTTPS**，等 Let's Encrypt 自動簽發憑證（勿反覆 Remove 重填）
-- 憑證好後瀏覽器驗證 `https://www.jesuswaytaipei.org`（🔒、圖片/分頁正常、http 自動轉 https、手機 RWD）
+### HTTPS 上線完成（2026-06-17 補記）
+- GitHub Pages 綁定 Custom domain `www.jesuswaytaipei.org`、DNS check 綠勾、Enforce HTTPS 已開
+- **憑證曾卡住**：第一次綁定後等超過 1 小時憑證都沒簽出（DNS / CAA / ACME 路徑經查全正確）。
+  解法是做**一次**乾淨的 Remove → 等 2 分鐘 → 重填 Custom domain 重新觸發，即成功
+- 憑證：**Let's Encrypt，到期 2026-09-15，GitHub 自動續簽**
+- 驗證全通過：`https://` 回 200、`http→https` 301、`apex→www` 301、RWD 正常
+- ✅ 階段一（`.org`）完成。階段二（`.org.tw`）待 TWNIC 註冊商申請下來再做，步驟見 `DOMAIN_SETUP.md`
 
 ---
 

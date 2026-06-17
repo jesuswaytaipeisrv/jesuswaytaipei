@@ -37,25 +37,28 @@
 
 ## STEP 4：在 GitHub 綁定自訂網域
 
-- [ ] Repo `jesuswaytaipeisrv/jesuswaytaipei` → **Settings → Pages**
-- [ ] **Custom domain** 欄位填 `www.jesuswaytaipei.org` → Save
-- [ ] 等下方出現 **DNS check successful（綠色勾）**（可能需數分鐘）
+- [x] Repo `jesuswaytaipeisrv/jesuswaytaipei` → **Settings → Pages**
+- [x] **Custom domain** 欄位填 `www.jesuswaytaipei.org` → Save
+- [x] 等下方出現 **DNS check successful（綠色勾）**（可能需數分鐘）
   > **設定一次就好，不要反覆 Remove/重填** —— 每次都會把 DNS 驗證與憑證簽發的計時器歸零，反而卡住。
 
 ## STEP 5：啟用 HTTPS 憑證（自動）
 
-- [ ] DNS check 通過後，**Enforce HTTPS** 選項才會可勾 → 勾選它
-- [ ] 等 GitHub 自動簽發憑證（Let's Encrypt，通常數分鐘～最多 1 小時）
+- [x] DNS check 通過後，**Enforce HTTPS** 選項才會可勾 → 勾選它
+- [x] 等 GitHub 自動簽發憑證（Let's Encrypt，通常數分鐘～最多 1 小時）
   > 期間 Enforce HTTPS 顯示灰色 / unavailable，屬正常，**耐心等、別一直按 Remove**。
   > **不需要自己去任何地方申請憑證或付費。**
+  > ⚠️ **本次實況（2026-06-17）**：第一次綁定後憑證等超過 1 小時都沒簽出（卡住），
+  > 確認 DNS / CAA / ACME 路徑全正確後，做**一次**乾淨的 Remove → 等 2 分鐘 → 重填，
+  > 重新觸發即成功簽發。憑證：Let's Encrypt，到期 2026-09-15（GitHub 自動續簽）。
 
-## STEP 6：驗證
+## STEP 6：驗證（2026-06-17 全數通過）
 
-- [ ] 瀏覽器開 `https://www.jesuswaytaipei.org` → 網址列顯示🔒鎖頭、無憑證警告
-- [ ] 首頁背景圖、各分頁、圖片、導覽連結都正常（確認網址置換無誤）
-- [ ] 開 `http://www.jesuswaytaipei.org`（http）→ 應自動轉成 https
-- [ ] 開 `https://jesuswaytaipei.org`（無 www）→ GitHub 應自動轉到 www
-- [ ] 手機寬度檢查 RWD 排版正常
+- [x] 瀏覽器開 `https://www.jesuswaytaipei.org` → 🔒鎖頭、無憑證警告（curl `HTTP/2 200`）
+- [x] 首頁背景圖、各分頁、圖片、導覽連結都正常（網址已置換）
+- [x] 開 `http://www.jesuswaytaipei.org` → 自動 `301` 轉成 https
+- [x] 開 `https://jesuswaytaipei.org`（無 www）→ `301` 自動轉到 www
+- [x] 手機寬度檢查 RWD 排版正常
 
 ---
 
