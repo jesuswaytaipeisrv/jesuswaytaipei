@@ -76,6 +76,21 @@
 
 ---
 
+## 本次修改記錄（2026-06-17）— 自訂網域階段一上線
+
+### 內容
+- DNS 確認已生效：`www.jesuswaytaipei.org` CNAME → `jesuswaytaipeisrv.github.io`，apex 四筆 GitHub Pages A 記錄皆在（Cloudflare 代管、DNS only 灰雲）
+- 全站 18 個 HTML 的 `og:image` / `og:url` 由 `jesuswaytaipeisrv.github.io/jesuswaytaipei/` 子路徑改為自訂網域根目錄 `https://www.jesuswaytaipei.org/`，並 grep 確認 HTML 無殘留舊網址
+- 新增 `DOMAIN_SETUP.md`（兩階段網域規劃）、`DOMAIN_CHECKLIST.md`（STEP 1–6 操作清單）
+- 已 commit + push（`829478e`）。GitHub Pages 已用自訂網域以 **HTTP 正常服務**（curl 回 200）
+
+### 待辦（須手動於 GitHub 網頁操作，本機無 gh CLI）
+- Repo → Settings → Pages → Custom domain 填 `www.jesuswaytaipei.org` → Save → 等 DNS check 綠勾
+- 勾 **Enforce HTTPS**，等 Let's Encrypt 自動簽發憑證（勿反覆 Remove 重填）
+- 憑證好後瀏覽器驗證 `https://www.jesuswaytaipei.org`（🔒、圖片/分頁正常、http 自動轉 https、手機 RWD）
+
+---
+
 ## 本次修改記錄（2026-05-30）
 
 ### 新增
