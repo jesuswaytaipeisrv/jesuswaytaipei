@@ -76,6 +76,33 @@
 
 ---
 
+## 本次修改記錄（2026-06-19）— 批次補跑 & update_sunday.py 修復
+
+### 背景
+週四（2026-06-18）本機關機，launchd 未執行；CI（GitHub Actions）雖觸發但因 yt-dlp 取不到日期而跳過。另發現 2026.06.07 的影片從未被加入表格。
+
+### 手動補入缺失資料
+- `sunday.html` / `en/sunday.html`：補入 2026.06.07「清楚明白，神為我們劃的界線 / 吳必然 牧師」（英文：The Clear Boundaries God Drew for Us / Pastor Pijan Wu）
+- 2026.06.14「上帝為什麼管我這麼嚴格？」已由本機補跑寫入，英文標題同步修正
+
+### update_sunday.py 修改
+| 問題 | 修法 |
+|------|------|
+| CI 上 `yt-dlp --skip-download --print %(upload_date)s` 被 YouTube 限流，回傳空值 | 新增 `parse_date_from_title()`：優先從標題開頭 `YYYY.MM.DD` 格式 parse 日期，免去額外 yt-dlp 呼叫 |
+| 標題無日期時 yt-dlp 在 CI 仍失敗 | `fetch_date()` 改用 `player_client=android`（走不同 API endpoint，CI 限流較少），fallback 才用預設 client |
+| 翻譯失敗（本機補跑時） | `google-genai` 未安裝在 `/usr/bin/python3`；launchd 用 `/opt/homebrew/bin/python3`（已有套件），本機補跑需用同一 python |
+
+### 根本原因（記錄供日後參考）
+台北樣教會 YouTube 頻道**在 2026.06 前後改變標題格式**，舊格式含日期（`2026.05.31 | 題目 | ...`），新格式不含（`題目 | 台北樣教會 吳必然 牧師 | ...`）。舊腳本依賴 yt-dlp 個別呼叫取日期，在 CI 環境不穩定，導致新格式影片被跳過。
+
+### 本機執行補跑方式
+```bash
+# GOOGLE_API_KEY 未存 Keychain 前，用此方式安全輸入（不進 history）
+read -s GOOGLE_API_KEY && export GOOGLE_API_KEY && /opt/homebrew/bin/python3 ~/documents/website/update_sunday.py
+```
+
+---
+
 ## 本次修改記錄（2026-06-17）— 自訂網域階段一上線
 
 ### 內容

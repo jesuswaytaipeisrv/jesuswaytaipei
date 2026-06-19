@@ -40,11 +40,21 @@
 | `update_sunday.py` | 每週四 21:00 自動抓最新主日信息與樣青講堂、更新表格、git commit & push |
 
 - 一次執行同時更新 `sunday.html`、`en/sunday.html`、`youth.html`、`en/youth.html`（各維持10筆）
-- **本機：** launchd 服務 `com.jesusway.update-sunday`（電腦關機時錯過，開機後補跑），更新後需 GitHub Desktop 手動 push
+- **本機：** launchd 服務 `com.jesusway.update-sunday`，每週四 21:00，使用 `/opt/homebrew/bin/python3`；電腦關機時錯過不補跑，須手動補
 - **GitHub Actions：** `.github/workflows/update_sunday.yml`，每週四 13:00 UTC（= 21:00 UTC+8）自動觸發，自動 push，並寄更新通知信至 jesuswaytaipeisrv@gmail.com
 - Log（本機）：`logs/update_sunday.log`
-- 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`
-- 需設定 GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
+- 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`（需 `GOOGLE_API_KEY`）
+- GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
+
+### 手動補跑方式
+```bash
+# key 輸入不進 history（安全）
+read -s GOOGLE_API_KEY && export GOOGLE_API_KEY && /opt/homebrew/bin/python3 ~/documents/website/update_sunday.py
+```
+
+### 日期取得邏輯（2026-06-19 更新）
+1. 優先從標題開頭 `YYYY.MM.DD` 格式 parse（無額外網路呼叫）
+2. 標題無日期時，呼叫 yt-dlp 取 `upload_date`，優先用 `player_client=android`（CI 環境限流較少）
 
 ---
 
