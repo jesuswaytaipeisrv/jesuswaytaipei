@@ -87,8 +87,13 @@ def fetch_latest_streams(max_items=25):
         elif "主日" in title and "樣青講堂" not in title and sunday_candidate is None:
             sunday_candidate = (vid, title)
 
+    def parse_date_from_title(title):
+        """從標題開頭解析 YYYY.MM.DD，例如「2026.06.14 | 上帝...」"""
+        m = re.match(r"(\d{4}\.\d{2}\.\d{2})", title.strip())
+        return m.group(1) if m else None
+
     def fetch_date(vid):
-        """個別抓取上傳日期，失敗或逾時時回傳 None"""
+        """備用：標題無日期時，個別呼叫 yt-dlp 取 upload_date"""
         try:
             r2 = subprocess.run(
                 ["yt-dlp", "--skip-download", "--print", "%(upload_date)s",
@@ -104,12 +109,20 @@ def fetch_latest_streams(max_items=25):
             return None
         return f"{date_str[:4]}.{date_str[4:6]}.{date_str[6:8]}"
 
+    def get_date(vid, title):
+        """優先從標題 parse 日期，無法 parse 才呼叫 yt-dlp"""
+        date_fmt = parse_date_from_title(title)
+        if date_fmt:
+            return date_fmt
+        logging.warning(f"標題無日期，改用 yt-dlp 抓取：{vid}")
+        return fetch_date(vid)
+
     latest_sunday = None
     latest_youth  = None
 
     if sunday_candidate:
         vid, title = sunday_candidate
-        date_fmt = fetch_date(vid)
+        date_fmt = get_date(vid, title)
         if date_fmt:
             logging.info(f"最新主日信息：{date_fmt} | {title[:40]}")
             latest_sunday = (date_fmt, title, vid)
@@ -118,7 +131,7 @@ def fetch_latest_streams(max_items=25):
 
     if youth_candidate:
         vid, title = youth_candidate
-        date_fmt = fetch_date(vid)
+        date_fmt = get_date(vid, title)
         if date_fmt:
             logging.info(f"最新樣青講堂：{date_fmt} | {title[:40]}")
             latest_youth = (date_fmt, title, vid)
