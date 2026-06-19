@@ -93,21 +93,31 @@ def fetch_latest_streams(max_items=25):
         return m.group(1) if m else None
 
     def fetch_date(vid):
-        """備用：標題無日期時，個別呼叫 yt-dlp 取 upload_date"""
-        try:
-            r2 = subprocess.run(
-                ["yt-dlp", "--skip-download", "--print", "%(upload_date)s",
-                 f"https://www.youtube.com/watch?v={vid}"],
-                capture_output=True, text=True, timeout=30
-            )
-        except subprocess.TimeoutExpired:
-            logging.error(f"yt-dlp 取得 {vid} 日期逾時（>30s）")
+        """備用：標題無日期時，個別呼叫 yt-dlp 取 upload_date。
+        優先用 android client（CI 環境較不易被 YouTube 限流），失敗再試預設 client。
+        """
+        def _run(extra_args):
+            try:
+                r2 = subprocess.run(
+                    ["yt-dlp", "--skip-download", "--print", "%(upload_date,release_date)s"]
+                    + extra_args + [f"https://www.youtube.com/watch?v={vid}"],
+                    capture_output=True, text=True, timeout=30
+                )
+                date_str = r2.stdout.strip()
+                if len(date_str) == 8 and date_str.isdigit():
+                    return f"{date_str[:4]}.{date_str[4:6]}.{date_str[6:8]}"
+            except subprocess.TimeoutExpired:
+                logging.error(f"yt-dlp 取得 {vid} 日期逾時（>30s）")
             return None
-        date_str = r2.stdout.strip()
-        if len(date_str) != 8 or not date_str.isdigit():
-            logging.error(f"無法取得 {vid} 的上傳日期，yt-dlp 回傳：{repr(date_str)}")
-            return None
-        return f"{date_str[:4]}.{date_str[4:6]}.{date_str[6:8]}"
+
+        date_fmt = _run(["--extractor-args", "youtube:player_client=android"])
+        if date_fmt:
+            return date_fmt
+        logging.warning(f"android client 失敗，改用預設 client 重試：{vid}")
+        date_fmt = _run([])
+        if not date_fmt:
+            logging.error(f"無法取得 {vid} 的上傳日期")
+        return date_fmt
 
     def get_date(vid, title):
         """優先從標題 parse 日期，無法 parse 才呼叫 yt-dlp"""
