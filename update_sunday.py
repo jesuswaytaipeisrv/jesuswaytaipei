@@ -92,20 +92,34 @@ def fetch_latest_streams(max_items=25):
         m = re.match(r"(\d{4}\.\d{2}\.\d{2})", title.strip())
         return m.group(1) if m else None
 
+    def parse_date_from_description(desc):
+        """從影片描述解析「日期：2026/06/21」格式（標題與 upload_date 皆無日期時的最後備援）"""
+        m = re.search(r"日期[：:]\s*(\d{4})[/.](\d{2})[/.](\d{2})", desc or "")
+        return f"{m.group(1)}.{m.group(2)}.{m.group(3)}" if m else None
+
     def fetch_date(vid):
-        """備用：標題無日期時，個別呼叫 yt-dlp 取 upload_date。
+        """備用：標題無日期時，個別呼叫 yt-dlp 取 upload_date；
+        若 upload_date 也拿不到，改剖析影片描述欄裡的「日期：YYYY/MM/DD」。
         優先用 android client（CI 環境較不易被 YouTube 限流），失敗再試預設 client。
         """
+        SEP = "\x1f"  # 分隔符，不會出現在描述文字中
+
         def _run(extra_args):
             try:
                 r2 = subprocess.run(
-                    ["yt-dlp", "--skip-download", "--print", "%(upload_date,release_date)s"]
+                    ["yt-dlp", "--skip-download",
+                     "--print", f"%(upload_date,release_date)s{SEP}%(description)s"]
                     + extra_args + [f"https://www.youtube.com/watch?v={vid}"],
                     capture_output=True, text=True, timeout=30
                 )
-                date_str = r2.stdout.strip()
+                date_str, _, desc = r2.stdout.strip().partition(SEP)
+                date_str = date_str.strip()
                 if len(date_str) == 8 and date_str.isdigit():
                     return f"{date_str[:4]}.{date_str[4:6]}.{date_str[6:8]}"
+                date_fmt = parse_date_from_description(desc)
+                if date_fmt:
+                    logging.info(f"upload_date 為空，改從影片描述取得日期：{vid} → {date_fmt}")
+                    return date_fmt
             except subprocess.TimeoutExpired:
                 logging.error(f"yt-dlp 取得 {vid} 日期逾時（>30s）")
             return None
@@ -116,7 +130,7 @@ def fetch_latest_streams(max_items=25):
         logging.warning(f"android client 失敗，改用預設 client 重試：{vid}")
         date_fmt = _run([])
         if not date_fmt:
-            logging.error(f"無法取得 {vid} 的上傳日期")
+            logging.error(f"無法取得 {vid} 的上傳日期（標題、upload_date、描述皆無法解析）")
         return date_fmt
 
     def get_date(vid, title):
@@ -281,9 +295,8 @@ def git_commit(updated_files, commit_msg):
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "add"] + updated_files, check=True)
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "commit", "-m", commit_msg], check=True)
     logging.info(f"git commit：{commit_msg}")
-    if os.environ.get("GITHUB_ACTIONS"):
-        subprocess.run(["git", "-C", str(WEBSITE_DIR), "push"], check=True)
-        logging.info("git push 完成")
+    subprocess.run(["git", "-C", str(WEBSITE_DIR), "push"], check=True)
+    logging.info("git push 完成")
 
 # ── 主流程 ────────────────────────────────────────────────────────────
 def main():
@@ -356,10 +369,7 @@ def main():
     if updated_files:
         msg = "feat: 自動更新 " + "、".join(commit_parts)
         git_commit(updated_files, msg)
-        if os.environ.get("GITHUB_ACTIONS"):
-            logging.info("=== 完成，已自動 push ===")
-        else:
-            logging.info("=== 完成，請用 GitHub Desktop push ===")
+        logging.info("=== 完成，已自動 push ===")
     else:
         logging.info("=== 無更新，結束 ===")
 
