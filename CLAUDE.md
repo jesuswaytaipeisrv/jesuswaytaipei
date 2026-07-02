@@ -9,7 +9,8 @@
 
 - **路徑：** `~/documents/website/`
 - **Repo：** `jesuswaytaipeisrv/jesuswaytaipei`（GitHub Pages）
-- **版控工具：** GitHub Desktop（帳號：jesuswaytaipeisrv）
+- **版控工具：** GitHub Desktop（帳號：jesuswaytaipeisrv，供人工修改內容時使用）
+- **自動化 push：** 走 SSH deploy key（`~/.ssh/id_ed25519_jesusway`，Host alias `github-jesusway`），`update_sunday.py` 執行後自動 commit + push，不經過 GitHub Desktop（2026-07-02 起）
 
 ---
 
@@ -51,11 +52,13 @@
 
 | 腳本 | 排程 | 功能 |
 |------|------|------|
-| `update_sunday.py` | 每週四 21:00（launchd） | 抓最新主日信息與樣青講堂，更新4個 HTML 表格，git commit |
+| `update_sunday.py` | 每週四 21:00（launchd + GitHub Actions 雙備援） | 抓最新主日信息與樣青講堂，更新4個 HTML 表格，git commit **並自動 push**（2026-07-02 起兩邊都自動 push，不必手動） |
 
-- launchd 服務：`com.jesusway.update-sunday`（電腦關機時錯過，開機後補跑）
-- 更新後須用 **GitHub Desktop 手動 push**
-- Log：`logs/update_sunday.log`
+- launchd 服務：`com.jesusway.update-sunday`
+  - **注意：電腦當下在睡眠狀態會直接跳過這次觸發，不會在開機後自動補跑**（plist 註解原寫「開機後補跑」，經 2026-07-02 實測不成立，已作廢這個假設）
+  - 若懷疑本機那次沒跑，以 GitHub Actions 的執行紀錄或 `sunday.html`/`youth.html` 內容為準，本機 log 沒紀錄不代表沒更新（GitHub Actions 不寫本機 log）
+- GitHub Actions：`.github/workflows/update_sunday.yml`，作為主要備援，即使本機睡眠也會準時（或稍晚幾小時，屬 GH Actions 排程正常延遲）觸發並 push
+- Log（僅本機執行會寫）：`logs/update_sunday.log`
 
 **`update_sunday.py` 一次更新的檔案：**
 - `sunday.html` + `en/sunday.html`（主日信息表格）
@@ -73,6 +76,36 @@
 | 標題裝飾 | 左側黃色 border（`border-l-4 border-yellow-400`）|
 | 圓角卡片 | `rounded-2xl shadow-sm border border-gray-100` |
 | Hero 背景圖 | `assets/images/site_bkg.png` |
+
+---
+
+## 本次修改記錄（2026-07-02）— 根本原因排查、日期解析加固、SSH 自動 push
+
+### 背景
+發現 `sunday.html`/`youth.html` 停在 2026.06.14 沒更新，2026.06.18、2026.06.25 兩個週四都沒有新內容進來。
+
+### 根本原因
+- 教會 YouTube 頻道在 2026.06.19 前後，把**全頻道（含舊影片）標題裡的日期前綴整個拿掉**（不是只有新片，用同一支影片 `1sf6qDYKu0E` 同一天前後兩次抓取結果對照確認：09:16 抓到時標題還有 `2026.06.14 | `，13:10 再抓就沒了）
+- 這代表 `parse_date_from_title()` 這條免呼叫捷徑，從此對所有影片都會失效，每支影片都得 fallback 到 `fetch_date()` 逐支呼叫 yt-dlp
+- `fetch_date()` 這條路徑在 GitHub Actions 環境本來就容易被 YouTube 限流失敗；失敗時只會 `logging.warning` 並整個跳過該筆，workflow 仍視為 `success`，導致漏更新完全看不出來
+- 實際漏掉：主日 2026.06.21「我的人生創業路｜張英樹弟兄」（`_VZUN11qY9E`）、樣青 2026.06.28「訂雞排不揪！是霸凌嗎？｜葉如凡」（`GAwhyWQeQIo`）
+
+### update_sunday.py 修改
+- `fetch_date()` 新增第三層 fallback：`upload_date` 也拿不到時，改剖析描述欄裡的「日期：YYYY/MM/DD」（兩支漏掉的影片描述欄都有 `🕑日期：2026/06/21` 這種固定格式）。同一次 yt-dlp 呼叫就把描述欄一起帶出（`%(upload_date,release_date)s\x1f%(description)s`），不多打一次 API
+- `git_commit()`：**移除 `GITHUB_ACTIONS` 判斷，本機執行也會自動 `git push`**，不再需要 GitHub Desktop 手動 push
+
+### 本機自動 push 設定（新增）
+- 產生專屬 SSH deploy key：`~/.ssh/id_ed25519_jesusway`（僅此 repo write 權限，非個人帳號 key）
+- `~/.ssh/config` 新增 Host alias `github-jesusway`（`IdentitiesOnly yes`，避免影響本機其他 GitHub SSH 設定）
+- repo remote 由 HTTPS 改為 `git@github-jesusway:jesuswaytaipeisrv/jesuswaytaipei.git`
+- Deploy key 加在 repo Settings → Deploy keys（勾選 Allow write access），非帳號層級 SSH key
+
+### 已手動補跑
+- 補入 2026.06.21 主日信息、2026.06.28 樣青講堂（中英文皆已 Gemini 翻譯成功，非暫用中文），commit `4820b3d` 已自動 push
+
+### 待辦 / 觀察重點
+- launchd 那次沒觸發是因為電腦在睡眠狀態，並非任何程式錯誤；「開機後補跑」這個假設已證實不可靠（見上方自動化章節）
+- 之後若頻道標題格式再變，優先檢查 `parse_date_from_description()` 的 regex（目前只認「日期：」+ `YYYY/MM/DD` 或 `YYYY.MM.DD`）是否還吻合
 
 ---
 
@@ -184,6 +217,7 @@ read -s GOOGLE_API_KEY && export GOOGLE_API_KEY && /opt/homebrew/bin/python3 ~/d
 
 ### 講員翻譯規則（已儲存至 Claude 記憶）
 - 吳必然 → **Pastor Pijan Wu**（不用 Wu Biran / Wu Pi-Jan）
+- 張英樹 弟兄 → **Brother Yingshu Zhang**（2026-07-02：Gemini 譯成「Founder and CEO of Victory Foundation, Yingshu Zhang」，已手動改為與其他講員一致的簡潔格式）
 
 ### 待辦
 - 無

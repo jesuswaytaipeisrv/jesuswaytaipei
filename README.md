@@ -4,7 +4,8 @@
 
 - **網址 repo：** `jesuswaytaipeisrv/jesuswaytaipei`
 - **本機路徑：** `~/documents/website`
-- **版控工具：** GitHub Desktop（帳號：jesuswaytaipeisrv）
+- **版控工具：** GitHub Desktop（帳號：jesuswaytaipeisrv，人工修改內容時使用）
+- **自動化 push：** SSH deploy key（`github-jesusway` host alias），詳見下方「自動化」章節
 
 ---
 
@@ -37,12 +38,15 @@
 
 | 腳本 | 說明 |
 |------|------|
-| `update_sunday.py` | 每週四 21:00 自動抓最新主日信息與樣青講堂、更新表格、git commit & push |
+| `update_sunday.py` | 每週四 21:00 自動抓最新主日信息與樣青講堂、更新表格、git commit & push（本機、CI 皆自動 push，2026-07-02 起） |
 
 - 一次執行同時更新 `sunday.html`、`en/sunday.html`、`youth.html`、`en/youth.html`（各維持10筆）
-- **本機：** launchd 服務 `com.jesusway.update-sunday`，每週四 21:00，使用 `/opt/homebrew/bin/python3`；電腦關機時錯過不補跑，須手動補
-- **GitHub Actions：** `.github/workflows/update_sunday.yml`，每週四 13:00 UTC（= 21:00 UTC+8）自動觸發，自動 push，並寄更新通知信至 jesuswaytaipeisrv@gmail.com
-- Log（本機）：`logs/update_sunday.log`
+- **本機：** launchd 服務 `com.jesusway.update-sunday`，每週四 21:00，使用 `/opt/homebrew/bin/python3`
+  - 電腦當下若在睡眠狀態會直接跳過這次觸發，**不會在開機後自動補跑**（2026-07-02 實測證實，先前假設有誤）
+  - push 走 SSH deploy key（`~/.ssh/id_ed25519_jesusway`，僅此 repo write 權限），remote 為 `git@github-jesusway:jesuswaytaipeisrv/jesuswaytaipei.git`，不再需要 GitHub Desktop
+- **GitHub Actions：** `.github/workflows/update_sunday.yml`，每週四 13:00 UTC（= 21:00 UTC+8）自動觸發（實際常晚幾小時，屬 GH Actions 排程正常延遲），自動 push，並寄更新通知信至 jesuswaytaipeisrv@gmail.com
+- 兩套機制互為備援；若本機睡眠錯過，GitHub Actions 仍會準時處理
+- Log（僅本機執行會寫）：`logs/update_sunday.log`
 - 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`（需 `GOOGLE_API_KEY`）
 - GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
 
@@ -52,9 +56,10 @@
 read -s GOOGLE_API_KEY && export GOOGLE_API_KEY && /opt/homebrew/bin/python3 ~/documents/website/update_sunday.py
 ```
 
-### 日期取得邏輯（2026-06-19 更新）
-1. 優先從標題開頭 `YYYY.MM.DD` 格式 parse（無額外網路呼叫）
+### 日期取得邏輯（2026-07-02 更新）
+1. 優先從標題開頭 `YYYY.MM.DD` 格式 parse（無額外網路呼叫）——**注意：頻道已於 2026-06 全面拿掉標題日期前綴，這條路徑目前實務上幾乎不會命中**
 2. 標題無日期時，呼叫 yt-dlp 取 `upload_date`，優先用 `player_client=android`（CI 環境限流較少）
+3. `upload_date` 仍拿不到時，改剖析同一次呼叫帶回的描述欄，找「日期：YYYY/MM/DD」格式（2026-07-02 新增）
 
 ---
 
