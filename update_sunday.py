@@ -205,6 +205,13 @@ def parse_youth_title_guest(raw_title):
     return title, guest
 
 # ── Gemini 翻譯 ───────────────────────────────────────────────────────
+# 固定講員譯名，Gemini 每次翻譯結果不穩定（曾多次翻成 Wu Biran / Wu Pi-Jan），
+# 已知講員一律用此表覆蓋，不吃 Gemini 當次結果
+SPEAKER_NAME_OVERRIDES = {
+    "吳必然 牧師": "Pastor Pijan Wu",
+    "張英樹 弟兄": "Brother Yingshu Zhang",
+}
+
 def translate_to_english(zh_title, zh_person, context="主日信息"):
     """用 Gemini 翻譯標題與人名，失敗回傳 (None, None)"""
     try:
@@ -236,7 +243,8 @@ def translate_to_english(zh_title, zh_person, context="主日信息"):
         resp = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
         text = re.sub(r"```json|```", "", resp.text).strip()
         data = json.loads(text)
-        return data.get("title", ""), data.get(key2, "")
+        person_en = SPEAKER_NAME_OVERRIDES.get(zh_person.strip(), data.get(key2, ""))
+        return data.get("title", ""), person_en
     except Exception as e:
         logging.error(f"Gemini 翻譯失敗（{context}）：{e}", exc_info=True)
         return None, None
