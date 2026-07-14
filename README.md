@@ -74,3 +74,5 @@
 | 敏感資料進 git | commit 前確認無帳號、密碼、金鑰等敏感內容 |
 | Public repo | 所有內容公開可見，上傳前確認圖片與文字無隱私疑慮 |
 | 外部連結 | 嵌入的 YouTube 影片、Line@ 連結定期確認有效性 |
+
+# Codex Review Test
