@@ -54,8 +54,8 @@
 |------|------|------|
 | `update_sunday.py` | 每週四 21:00（launchd + GitHub Actions 雙備援） | 抓最新主日信息與樣青講堂，更新4個 HTML 表格，git commit **並自動 push**（2026-07-02 起兩邊都自動 push，不必手動） |
 
-- launchd 服務：`com.jesusway.update-sunday`
-  - **注意：電腦當下在睡眠狀態會直接跳過這次觸發，不會在開機後自動補跑**（plist 註解原寫「開機後補跑」，經 2026-07-02 實測不成立，已作廢這個假設）
+- launchd 服務：`com.jesusway.update-sunday-v2`（2026-07-17 起，取代舊的 `com.jesusway.update-sunday`，見下方修改記錄）
+  - 舊的「電腦睡眠導致跳過觸發」推測**已證實是誤判**（2026-07-17 查證：當天電腦全程開機未睡眠，pmset log 無任何 sleep/wake 事件）。真正原因是 launchd 層級的 TCC 權限問題，見下方修改記錄
   - 若懷疑本機那次沒跑，以 GitHub Actions 的執行紀錄或 `sunday.html`/`youth.html` 內容為準，本機 log 沒紀錄不代表沒更新（GitHub Actions 不寫本機 log）
 - GitHub Actions：`.github/workflows/update_sunday.yml`，作為主要備援，即使本機睡眠也會準時（或稍晚幾小時，屬 GH Actions 排程正常延遲）觸發並 push
 - Log（僅本機執行會寫）：`logs/update_sunday.log`
@@ -80,12 +80,32 @@
 
 ---
 
-## 本次修改記錄（2026-07-17）— 週四批次漏更新排查、補跑、失敗告警機制
+## 本次修改記錄（2026-07-17）— 週四批次漏更新排查、補跑、失敗告警機制、本機 launchd TCC 權限修復
 
 ### 背景
-用戶回報「週四晚間批次又失敗了」。查明本機 launchd（`com.jesusway.update-sunday`）當晚電腦處於睡眠狀態，觸發被跳過（已知限制，見上方自動化章節）。
+用戶回報「週四晚間批次又失敗了」。查起初以為是本機 launchd（`com.jesusway.update-sunday`）當晚電腦睡眠導致觸發被跳過，但使用者指出當天電腦確定沒關機/沒睡眠，追問「補跑會成功、排程卻失敗」的矛盾，進一步深查後發現真正原因跟睡眠完全無關（見下方「本機 launchd 根本原因」）。
 
-### 根本原因（GitHub Actions 備援層）
+### 本機 launchd 根本原因（2026-07-17 深查後確認，推翻先前的睡眠假設）
+用 `launchctl print` 查詢發現 `last exit code = 78 (EX_CONFIG)`、`runs = 1`（系統自 2026-07-11 開機後只觸發過一次，時間點吻合週四 21:00），且完全沒進到 Python 的第一行 log——代表**連 Python 直譯器都還沒啟動，launchd 在 spawn 階段本身就失敗了**，不是腳本邏輯錯誤，也不是電腦睡眠跳過（`pmset -g log` 查證當天 07-16 全天無任何 sleep/wake 事件）。
+
+用一系列對照測試（同一支 `/opt/homebrew/bin/python3` + 同一支 script，只改 `StandardOutPath`/`StandardErrorPath` 指向哪裡）鎖定成因：
+- 輸出導到 `/tmp/...` → 正常成功（exit 0）
+- 輸出導到 `~/documents/website/logs/update_sunday.log`（也就是舊 plist 原本的設定）→ 100% 重現 `EX_CONFIG`，無法 spawn
+
+**結論：launchd 幫背景程式設定 `StandardOutPath`/`StandardErrorPath` 這個動作，在寫入 `~/Documents/...`（macOS 的 TCC 保護資料夾，跟 Desktop/Downloads 同級）時會被系統靜默拒絕，導致整個 job 連 spawn 都失敗**——這跟「該行程本身」有沒有讀寫 Documents 的權限是兩回事：同一支 python3 一旦成功啟動後，腳本自己用 `RotatingFileHandler` 寫同一個路徑完全正常（已驗證）。只有 launchd 自己在 spawn 那一刻要開檔導向 stdout/stderr 這個動作特別受限。時間點上跟 `macOS Tahoe 26.5.2`（2026-07-02 安裝）這次系統更新吻合，推測是這次更新收緊了 launchd 對 TCC 保護資料夾的檢查。
+
+過去每一筆「成功」的本機 log 記錄（06-05、06-19、07-02、07-09），時間都不是準點 21:00（例如 22:46、09:16、13:10），代表其實**從來就不是 launchd 準時自動觸發成功過**，全部都是後續手動補跑覆蓋掉的結果——先前 CLAUDE.md 記載的「睡眠導致跳過」是誤判，真正問題可能已存在一段時間，只是每次都被手動補跑蓋過去，沒人發現排程本身沒在真正運作。
+
+### 修復（本機 launchd）
+- 停用舊的 `com.jesusway.update-sunday`（plist 改名為 `.disabled_20260717` 保留在 `~/Library/LaunchAgents/`，未刪除）
+- 新增 `com.jesusway.update-sunday-v2`，關鍵差異：
+  - `StandardOutPath` / `StandardErrorPath` 改指到 `~/Library/Logs/jesusway/update_sunday_launchd.log`（TCC 不保護的路徑），避開 spawn 階段被拒絕的問題
+  - 新增 `EnvironmentVariables`（`PATH` 含 `/opt/homebrew/bin`、`HOME`）——原本 plist 完全沒設環境變數，launchd 預設 `PATH` 只有 `/usr/bin:/bin:/usr/sbin:/sbin`，就算 spawn 問題沒發生，腳本第一步呼叫 `yt-dlp` 也會找不到指令（`FileNotFoundError: yt-dlp`），這是另一個獨立於 TCC 問題之外、原本就存在的隱藏 bug，這次一併修掉
+  - 排程時間、腳本路徑、其餘設定不變（每週四 21:00）
+- 腳本自己寫的 `logs/update_sunday.log`（`~/documents/website/logs/`）不受影響，繼續正常寫入，歷史紀錄延續
+- 已用 `launchctl kickstart -k` 實際觸發驗證：exit code 0，完整跑完全流程，兩份 log 都正確寫入
+
+### 根本原因（GitHub Actions 備援層，跟本機 launchd 問題各自獨立）
 本機沒跑不是新問題，真正的問題是**連 GitHub Actions 備援那次也沒有實際更新網站，卻回報 success**：
 - 2026-07-16 的 workflow run 確實有觸發，也確實掃到新的主日信息候選影片（`uyHATNU9p5w`，2026.07.12「每當我想贏的時候 就要像王一樣思考」）
 - 但該影片標題已不含日期前綴（YouTube 頻道標題格式又變了，同一類問題先前已發生兩次），必須 fallback 呼叫 yt-dlp 個別抓 `upload_date`
@@ -100,6 +120,9 @@
 ### 待辦 / 觀察重點
 - 這類 YouTube 對 CI 限流的問題屬間歇性，未來仍可能發生；這次修的是「讓失敗看得見」，不是徹底根除限流本身
 - 若警告信開始頻繁出現，可考慮加 retry（多次重試 + 間隔）或改用 cookies 驗證降低被限流機率
+- 下週四（07-23）21:00 觀察 `com.jesusway.update-sunday-v2` 是否準時自動觸發成功（`~/Library/Logs/jesusway/update_sunday_launchd.log` 有無新內容、`launchctl print` 的 `last exit code` 是否為 0），這是第一次真正驗證排程本身能自動跑，先前所有「成功」紀錄都是手動補跑
+- 舊 plist `com.jesusway.update-sunday.plist.disabled_20260717` 先保留在 `~/Library/LaunchAgents/`，確認新版穩定一陣子後可以刪除
+- macOS 對 `~/Documents`/`~/Desktop`/`~/Downloads` 的 TCC 保護會影響任何指向這些資料夾的 launchd `StandardOutPath`/`StandardErrorPath`，往後新增任何 launchd job 都要避開，改寫到 `~/Library/Logs/` 之類的位置
 
 ---
 
