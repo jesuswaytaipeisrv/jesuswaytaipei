@@ -59,6 +59,7 @@
   - 若懷疑本機那次沒跑，以 GitHub Actions 的執行紀錄或 `sunday.html`/`youth.html` 內容為準，本機 log 沒紀錄不代表沒更新（GitHub Actions 不寫本機 log）
 - GitHub Actions：`.github/workflows/update_sunday.yml`，作為主要備援，即使本機睡眠也會準時（或稍晚幾小時，屬 GH Actions 排程正常延遲）觸發並 push
 - Log（僅本機執行會寫）：`logs/update_sunday.log`
+- **失敗告警（2026-07-17 起）**：若找到符合關鍵字的候選影片、但 yt-dlp 抓不到日期（常見於 YouTube 對 GitHub Actions 限流），會寄警告信到 `jesuswaytaipeisrv@gmail.com`（主旨開頭 ⚠️），提醒人工確認或到 Actions 頁面 Re-run。這種情況 workflow 本身仍會顯示綠色 success，只能靠這封信才看得出來漏更新了
 
 **`update_sunday.py` 一次更新的檔案：**
 - `sunday.html` + `en/sunday.html`（主日信息表格）
@@ -76,6 +77,29 @@
 | 標題裝飾 | 左側黃色 border（`border-l-4 border-yellow-400`）|
 | 圓角卡片 | `rounded-2xl shadow-sm border border-gray-100` |
 | Hero 背景圖 | `assets/images/site_bkg.png` |
+
+---
+
+## 本次修改記錄（2026-07-17）— 週四批次漏更新排查、補跑、失敗告警機制
+
+### 背景
+用戶回報「週四晚間批次又失敗了」。查明本機 launchd（`com.jesusway.update-sunday`）當晚電腦處於睡眠狀態，觸發被跳過（已知限制，見上方自動化章節）。
+
+### 根本原因（GitHub Actions 備援層）
+本機沒跑不是新問題，真正的問題是**連 GitHub Actions 備援那次也沒有實際更新網站，卻回報 success**：
+- 2026-07-16 的 workflow run 確實有觸發，也確實掃到新的主日信息候選影片（`uyHATNU9p5w`，2026.07.12「每當我想贏的時候 就要像王一樣思考」）
+- 但該影片標題已不含日期前綴（YouTube 頻道標題格式又變了，同一類問題先前已發生兩次），必須 fallback 呼叫 yt-dlp 個別抓 `upload_date`
+- `android` client、預設 client 兩次個別呼叫在 GitHub Actions 環境**都失敗**（本機用同一支影片 ID 測試完全正常，確認是 YouTube 對 GitHub Actions 共用 IP 限流，非程式邏輯錯誤）
+- 舊邏輯把「候選影片存在但日期解析失敗」跟「本週真的沒有新影片」一視同仁，兩者都只是 log 印一行 warning、workflow 照樣 `success`、也不會觸發 email 通知 → **漏更新完全沒人知道**
+
+### 修復
+- **手動補跑**：本機直接執行 `update_sunday.py`，本機環境抓日期正常，成功補上 2026.07.12 主日信息（中英文皆已透過 Gemini 正常翻譯，非暫用中文），commit `8d87cf6`
+- **`update_sunday.py`**：`fetch_latest_streams()` 新增回傳 `date_fetch_failed` 旗標（候選影片存在但日期解析失敗時為 `True`，跟「本週無新內容」明確區分）；`GITHUB_ACTIONS` 環境下寫入 `$GITHUB_OUTPUT`
+- **`.github/workflows/update_sunday.yml`**：「Run update script」步驟加 `id: update`；新增一個條件式 step，`date_fetch_failed == 'true'` 時寄一封警告信（主旨 ⚠️ 開頭），提醒到 Actions 頁面 Re-run 或本機手動補跑
+
+### 待辦 / 觀察重點
+- 這類 YouTube 對 CI 限流的問題屬間歇性，未來仍可能發生；這次修的是「讓失敗看得見」，不是徹底根除限流本身
+- 若警告信開始頻繁出現，可考慮加 retry（多次重試 + 間隔）或改用 cookies 驗證降低被限流機率
 
 ---
 
