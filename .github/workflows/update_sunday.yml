@@ -34,6 +34,7 @@ jobs:
         run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Run update script
+        id: update
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           WEBSITE_DIR: ${{ github.workspace }}
@@ -75,5 +76,32 @@ jobs:
             ──────────────────────────
             主日信息：https://jesuswaytaipeisrv.github.io/jesuswaytaipei/sunday.html
             樣青講堂：https://jesuswaytaipeisrv.github.io/jesuswaytaipei/youth.html
+            ──────────────────────────
+            此信由 GitHub Actions 自動發送，請勿直接回覆。
+
+      - name: Send date-fetch-failed warning email
+        if: steps.update.outputs.date_fetch_failed == 'true'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: jesuswaytaipeisrv@gmail.com
+          password: ${{ secrets.GMAIL_APP_PASSWORD }}
+          subject: "⚠️【台北樣教會】網站自動更新可能漏更新，請人工確認"
+          to: jesuswaytaipeisrv@gmail.com
+          from: 台北樣教會自動排程 <jesuswaytaipeisrv@gmail.com>
+          body: |
+            本次自動更新偵測到符合關鍵字的新影片，但 yt-dlp 無法取得該影片的日期（標題、upload_date、描述皆解析失敗），
+            因此本次未寫入網站，也不會被視為「本週沒有新內容」。
+
+            常見原因：YouTube 對 GitHub Actions 執行環境做了限流／防機器人偵測，屬間歇性問題。
+
+            建議處理方式：
+            1. 到 Actions 頁面重新執行（Re-run jobs）本次 workflow，通常下次即可正常抓到
+            2. 若重跑仍失敗，改在本機手動執行 update_sunday.py 補上
+
+            ──────────────────────────
+            執行紀錄：${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             ──────────────────────────
             此信由 GitHub Actions 自動發送，請勿直接回覆。

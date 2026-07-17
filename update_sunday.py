@@ -162,11 +162,16 @@ def fetch_latest_streams(max_items=25):
         else:
             logging.warning("樣青講堂取得日期失敗")
 
+    date_fetch_failed = False
     if not latest_sunday:
         logging.warning("找不到新的主日信息")
+        if sunday_candidate:
+            date_fetch_failed = True
     if not latest_youth:
         logging.warning("找不到新的樣青講堂")
-    return latest_sunday, latest_youth
+        if youth_candidate:
+            date_fetch_failed = True
+    return latest_sunday, latest_youth, date_fetch_failed
 
 # ── 主日：標題與講員解析 ──────────────────────────────────────────────
 def parse_sunday_title_speaker(raw_title):
@@ -312,7 +317,16 @@ def main():
     load_env()
     logging.info("=== update_sunday.py 開始 ===")
 
-    latest_sunday, latest_youth = fetch_latest_streams()
+    latest_sunday, latest_youth, date_fetch_failed = fetch_latest_streams()
+
+    if date_fetch_failed:
+        # 找到候選影片（標題關鍵字符合），但 yt-dlp 抓不到日期（title/upload_date/描述皆失敗）。
+        # 這與「本週真的沒有新影片」不同，若不特別標記，workflow 仍會回報 success，沒人知道漏更新了。
+        logging.error("有候選影片但日期解析失敗，本次可能漏更新，請人工確認（常見原因：YouTube 對 CI 環境限流）")
+        gh_output = os.environ.get("GITHUB_OUTPUT")
+        if gh_output:
+            with open(gh_output, "a") as f:
+                f.write("date_fetch_failed=true\n")
 
     updated_files = []
     commit_parts  = []
