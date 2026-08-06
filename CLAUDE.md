@@ -29,6 +29,7 @@
 - TailwindCSS（CDN）
 - Google Fonts：Noto Sans TC
 - 語言：繁體中文（`lang="zh-Hant"`）+ 英文（`en/`，`lang="en"`）
+- Google Analytics 4：評估 ID `G-6BH0T2SH0Y`（gtag.js，全 18 頁 `</head>` 前）
 
 ---
 
@@ -77,6 +78,33 @@
 | 標題裝飾 | 左側黃色 border（`border-l-4 border-yellow-400`）|
 | 圓角卡片 | `rounded-2xl shadow-sm border border-gray-100` |
 | Hero 背景圖 | `assets/images/site_bkg.png` |
+
+---
+
+## 本次修改記錄（2026-08-06）— 導入 Google Analytics 4
+
+### 內容
+
+- 建立 GA4 帳戶「台北樣教會」／資源「台北樣教會官網」，網頁資料串流指向 `https://www.jesuswaytaipei.org`，評估 ID `G-6BH0T2SH0Y`。
+- 全站 18 個 HTML（9 中文 + 9 英文）在 `</head>` 前插入 gtag.js 片段，每檔各 8 行，內容完全一致。
+- 決定**不做 Cookie 同意橫幅**：訪客以台灣本地會友為主，GA4 預設已做 IP 匿名化。若日後海外流量佔比提高需重新評估。
+- 評估 ID 屬設計上可公開的識別值（同 Firebase Web API key 性質），直接寫在前端 HTML 不算外洩，不需走環境變數。
+
+### 與自動化的關係
+
+`update_sunday.py` 的 `update_table()` 只在 `<tbody class="bg-white divide-y divide-gray-100">` 之後插入 `<tr>`，不觸碰 `<head>`，因此每週自動更新主日資料**不會洗掉 GA 片段**。
+
+### 測試結果
+
+- ✅ 18 檔各含且僅含一份片段（`grep -c` 每檔為 2，因片段內 ID 出現於 `src` 與 `config` 各一次）；`git diff --stat` 為 18 檔 × 8 行新增，無其他變更。
+- ✅ 全站原本無任何 analytics 痕跡，確認非重複安裝。
+- ⚠️ **本機瀏覽器驗證失敗（非程式問題）**：起 `python3 -m http.server 8899`，`curl` 回 200，但 Claude in Chrome 開 `127.0.0.1` / `localhost` 皆顯示錯誤頁，判定為瀏覽器擴充套件的網站權限未涵蓋 localhost。伺服器已於測試後關閉。
+- 待補：正式站部署後於實際瀏覽器確認 gtag.js 載入、Network 有 `/g/collect` 請求、GA4 即時報表收到資料。**未完成前不得視為驗證通過。**
+
+### 待辦 / 觀察重點
+
+- GA4 標準報表需 24–48 小時才有數字，即時報表約 30 秒內可見；驗證當下只能確認「資料送出且 GA 收到」。
+- 可考慮在 GA4 設定「排除內部流量」，避免自己維護網站時的瀏覽灌水統計。
 
 ---
 

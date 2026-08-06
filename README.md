@@ -15,6 +15,24 @@
 - TailwindCSS（CDN）
 - Google Fonts：Noto Sans TC
 - 響應式設計（桌面／手機版導覽列切換）
+- Google Analytics 4（gtag.js，評估 ID `G-6BH0T2SH0Y`）
+
+### 網站分析
+
+全站 18 頁的 `</head>` 前都有一段 GA4 gtag.js。**新增頁面時務必一併加入**，否則該頁不會被統計：
+
+```html
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-6BH0T2SH0Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-6BH0T2SH0Y');
+</script>
+```
+
+報表在 https://analytics.google.com/ 查看。GA4 免費版即可，無費用。
 
 ---
 
