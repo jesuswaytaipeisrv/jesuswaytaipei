@@ -98,8 +98,15 @@
 
 - ✅ 18 檔各含且僅含一份片段（`grep -c` 每檔為 2，因片段內 ID 出現於 `src` 與 `config` 各一次）；`git diff --stat` 為 18 檔 × 8 行新增，無其他變更。
 - ✅ 全站原本無任何 analytics 痕跡，確認非重複安裝。
-- ⚠️ **本機瀏覽器驗證失敗（非程式問題）**：起 `python3 -m http.server 8899`，`curl` 回 200，但 Claude in Chrome 開 `127.0.0.1` / `localhost` 皆顯示錯誤頁，判定為瀏覽器擴充套件的網站權限未涵蓋 localhost。伺服器已於測試後關閉。
-- 待補：正式站部署後於實際瀏覽器確認 gtag.js 載入、Network 有 `/g/collect` 請求、GA4 即時報表收到資料。**未完成前不得視為驗證通過。**
+- ⚠️ 本機瀏覽器驗證未能執行（非程式問題）：起 `python3 -m http.server 8899`，`curl` 回 200，但 Claude in Chrome 開 `127.0.0.1` / `localhost` 皆顯示錯誤頁，判定為瀏覽器擴充套件的網站權限未涵蓋 localhost。伺服器已於測試後關閉。改以正式站驗證（GA4 資料串流本就綁定該網域，正式站才是正確的驗證環境）。
+- ✅ **正式站實際瀏覽器驗證通過**（push 後 GitHub Pages 部署完成，`last-modified: 2026-08-06 11:58:55 GMT`）：
+  - `https://www.googletagmanager.com/gtag/js?id=G-6BH0T2SH0Y` → 200
+  - 連續瀏覽 `/`、`/sunday.html`、`/about.html` 三頁，各發出一筆 `google-analytics.com/g/collect`，參數含 `tid=G-6BH0T2SH0Y`、`en=page_view`，且三筆 `cid` 相同（session 正確串接）
+  - **GA4 即時報表確認收到**：`page_view` 3、`first_visit` 1、`session_start` 1；網頁標題列出「台北樣教會 JesuswayTaipei」「主日信息」「關於我們」各 1，與實際瀏覽路徑一致
+
+### 已知誤導：`/g/collect` 顯示 503
+
+Chrome 開發者工具／自動化工具會把 `/g/collect` 的回應顯示成 **503**，但 GA4 即時報表確實收到全部事件。原因是 gtag 以 `sendBeacon`／`keepalive` 送出，攔截層對這類請求的狀態碼判讀不準。**日後排查請以 GA4 即時報表為準，不要因為看到 503 就以為安裝失敗。**
 
 ### 待辦 / 觀察重點
 
