@@ -48,6 +48,35 @@ def load_env():
                 k, v = line.split("=", 1)
                 os.environ.setdefault(k.strip(), v.strip())
 
+# ── 失敗告警 ──────────────────────────────────────────────────────────
+def notify_failure(subject, detail):
+    """
+    本機 launchd 執行失敗時發 Telegram 通知。
+
+    CI 端的告警由 workflow 的 send-mail step 負責，這裡只處理本機——本機失敗原本
+    完全靜默，只寫進沒人會去看的 log 檔（2026-08-06 事故即因此整週未被察覺）。
+    token 取自 ~/.hermes/.env，僅單向讀取來發訊息，不涉及 Hermes agent 的任何授權。
+    """
+    if os.environ.get("GITHUB_ACTIONS"):
+        return
+    token = os.environ.get("TELEGRAM_BOT_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_HOME_CHANNEL")
+    if not token or not chat_id:
+        logging.error("未設定 TELEGRAM_BOT_TOKEN／TELEGRAM_HOME_CHANNEL，無法發出失敗告警")
+        return
+    text = f"⚠️ 台北樣教會網站自動更新：{subject}\n\n{detail}\n\nlog：{LOG_FILE}"
+    try:
+        import urllib.request
+        import urllib.parse
+        data = urllib.parse.urlencode({"chat_id": chat_id, "text": text}).encode()
+        req = urllib.request.Request(f"https://api.telegram.org/bot{token}/sendMessage", data=data)
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            resp.read()
+        logging.info("已發出 Telegram 失敗告警")
+    except Exception as e:
+        logging.error(f"發送 Telegram 告警失敗：{e}")
+
+
 # ── YouTube 抓取（一次掃描同時找主日與樣青）────────────────────────────
 def fetch_latest_streams(max_items=25):
     """
@@ -308,6 +337,17 @@ def git_commit(updated_files, commit_msg):
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "add"] + updated_files, check=True)
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "commit", "-m", commit_msg], check=True)
     logging.info(f"git commit：{commit_msg}")
+
+    # push 前先併入遠端。多台電腦共用此 repo，遠端若被別台推過，直接 push 必被拒
+    # （2026-08-06 事故：本機更新做完卻推不上去，網站整週沒更新且無人察覺）。
+    logging.info("git pull --rebase：併入遠端變更")
+    rebase = subprocess.run(["git", "-C", str(WEBSITE_DIR), "pull", "--rebase"],
+                            capture_output=True, text=True)
+    if rebase.returncode != 0:
+        # 衝突時務必還原乾淨，否則 repo 卡在 rebase 中，下週排程一樣爆
+        subprocess.run(["git", "-C", str(WEBSITE_DIR), "rebase", "--abort"], check=False)
+        raise RuntimeError(f"git pull --rebase 失敗，已 abort，需人工處理：{rebase.stderr.strip()}")
+
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "push"], check=True)
     logging.info("git push 完成")
 
@@ -327,6 +367,9 @@ def main():
         if gh_output:
             with open(gh_output, "a") as f:
                 f.write("date_fetch_failed=true\n")
+        notify_failure("可能漏更新",
+                       "偵測到符合關鍵字的新影片，但抓不到日期，本次未寫入網站。"
+                       "常見原因是 YouTube 限流，請人工確認或稍後重跑。")
 
     updated_files = []
     commit_parts  = []
@@ -352,8 +395,7 @@ def main():
             ok_en = update_table(WEBSITE_DIR / "en" / "sunday.html",
                                  build_row(date, title_en, speaker_en, video_id, "Watch →"))
             if not ok_zh or not ok_en:
-                logging.error("主日信息更新失敗，略過 commit")
-                return
+                raise RuntimeError("主日信息寫入 HTML 失敗（找不到 tbody 或 tr 標記），略過 commit")
 
             updated_files += ["sunday.html", "en/sunday.html"]
             note = "（英文暫用中文）" if en_fallback else ""
@@ -380,8 +422,7 @@ def main():
             ok_en = update_table(WEBSITE_DIR / "en" / "youth.html",
                                  build_row(date, title_en, guest_en, video_id, "Watch →"))
             if not ok_zh or not ok_en:
-                logging.error("樣青講堂更新失敗，略過 commit")
-                return
+                raise RuntimeError("樣青講堂寫入 HTML 失敗（找不到 tbody 或 tr 標記），略過 commit")
 
             updated_files += ["youth.html", "en/youth.html"]
             note = "（英文暫用中文）" if en_fallback else ""
@@ -397,4 +438,9 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.exception("執行失敗")
+        notify_failure("排程執行失敗", f"{type(e).__name__}: {e}")
+        sys.exit(1)

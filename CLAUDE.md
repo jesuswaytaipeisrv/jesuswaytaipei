@@ -53,14 +53,15 @@
 
 | 腳本 | 排程 | 功能 |
 |------|------|------|
-| `update_sunday.py` | 每週四 21:00（launchd + GitHub Actions 雙備援） | 抓最新主日信息與樣青講堂，更新4個 HTML 表格，git commit **並自動 push**（2026-07-02 起兩邊都自動 push，不必手動） |
+| `update_sunday.py` | 本機 launchd 週四 21:00（主）＋ GitHub Actions 週五 09:00（補救層，2026-08-09 起錯開） | 抓最新主日信息與樣青講堂，更新4個 HTML 表格，git commit **並自動 push**（2026-07-02 起兩邊都自動 push，不必手動） |
 
 - launchd 服務：`com.jesusway.update-sunday-v2`（2026-07-17 起，取代舊的 `com.jesusway.update-sunday`，見下方修改記錄）
   - 舊的「電腦睡眠導致跳過觸發」推測**已證實是誤判**（2026-07-17 查證：當天電腦全程開機未睡眠，pmset log 無任何 sleep/wake 事件）。真正原因是 launchd 層級的 TCC 權限問題，見下方修改記錄
   - 若懷疑本機那次沒跑，以 GitHub Actions 的執行紀錄或 `sunday.html`/`youth.html` 內容為準，本機 log 沒紀錄不代表沒更新（GitHub Actions 不寫本機 log）
-- GitHub Actions：`.github/workflows/update_sunday.yml`，作為主要備援，即使本機睡眠也會準時（或稍晚幾小時，屬 GH Actions 排程正常延遲）觸發並 push
+- GitHub Actions：`.github/workflows/update_sunday.yml`，**2026-08-09 起改為每週五 09:00（台北）**，即本機跑完隔天早上才跑，作為本機失敗時的補救層（原本與本機同排週四 21:00，備援從未被真正驗證過，見 2026-08-09 記錄）
 - Log（僅本機執行會寫）：`logs/update_sunday.log`
 - **失敗告警（2026-07-17 起）**：若找到符合關鍵字的候選影片、但 yt-dlp 抓不到日期（常見於 YouTube 對 GitHub Actions 限流），會寄警告信到 `jesuswaytaipeisrv@gmail.com`（主旨開頭 ⚠️），提醒人工確認或到 Actions 頁面 Re-run。這種情況 workflow 本身仍會顯示綠色 success，只能靠這封信才看得出來漏更新了
+- **本機失敗告警（2026-08-09 起）**：本機 launchd 執行失敗時發 **Telegram** 訊息（token 取自 `~/.hermes/.env`）。CI 端的信箱 `jesuswaytaipeisrv@gmail.com` 不是日常會看的信箱，2026-08-06 那封警告信就是這樣被忽略的
 
 **`update_sunday.py` 一次更新的檔案：**
 - `sunday.html` + `en/sunday.html`（主日信息表格）
@@ -78,6 +79,69 @@
 | 標題裝飾 | 左側黃色 border（`border-l-4 border-yellow-400`）|
 | 圓角卡片 | `rounded-2xl shadow-sm border border-gray-100` |
 | Hero 背景圖 | `assets/images/site_bkg.png` |
+
+---
+
+## 本次修改記錄（2026-08-09）— 08-06 漏更新排查、補推上線、git 併推與告警修復
+
+### 事故：2026-08-06 週四批次，兩層排程同時失效
+
+線上 `sunday.html` 停在 2026.07.26，缺 08.02「在我們中間的神國｜竹南清心教會 張紹軒 牧師」。查證後確認**兩層各自獨立地失敗**：
+
+**第一層（本機 launchd）——內容做出來了，卡在 `git push`**
+
+`logs/update_sunday.log` 顯示 8/6 21:00 排程準時執行、抓片與 Gemini 翻譯全部成功、中英版 HTML 都改好、commit `165db4d` 也建立了，但 push 被遠端拒絕：
+
+```
+! [rejected]  main -> main (fetch first)
+subprocess.CalledProcessError: ... 'git', 'push' ... exit status 1
+```
+
+原因是**同一天在另一台電腦（`Gary Huang <garyhuang@Garydebijixingdiannao.local>`）推了 GA4 的三個 commit**（`50343f4`、`8c36284`、`d976aae`），本機 repo 從未 pull 過。舊的 `git_commit()` 是 `add → commit → push`，中間沒有 `pull --rebase`，**只要遠端被別台電腦動過就必爆**。且腳本內完全沒有告警機制（`grep smtp|mail|notify` 在 .py 內零命中，告警全寫在 workflow yml 裡），本機失敗只寫進沒人會看的 log 檔 → 完全靜默。
+
+**第二層（GitHub Actions）——又被 YouTube 限流，且告警信寄到沒人看的信箱**
+
+Actions run `31114567788` 標記 **success**，實際輸出「ℹ️ 無新內容，本週已是最新」，同時觸發了 2026-07-17 建立的 `date_fetch_failed` 警告信機制（信確實有寄出）。但**收件者是 `jesuswaytaipeisrv@gmail.com`，不是日常會看的信箱**，所以沒人注意到。根因仍是 YouTube 對 GH Actions 出口 IP 的間歇性限流，與 07-17 同一類問題。
+
+**額外發現：所謂「雙備援」從未被驗證過**
+
+本機 launchd 與 GH Actions 原本都排在週四 21:00。正常週永遠是本機先跑完並 push，Actions 跑起來看到已是最新就回報「無新內容」——**07-23、07-30 的綠燈 success 其實是「什麼都沒做」**，備援能力一次也沒被真正驗證過。8/6 這次兩邊剛好同時失效，缺口才暴露。
+
+### 修復
+
+**1. 補推 08.02 上線**
+
+本機 `git pull --rebase` 併入 GA4 三個 commit，**無衝突**（GA4 只動 `<head>`，自動更新只動 `<tbody>`）。驗證中英版皆含 08.02、GA4 片段未被覆蓋後 push（`0be3232`）。
+
+**2. `update_sunday.py`：`git_commit()` push 前先 `pull --rebase`**
+
+衝突時自動 `rebase --abort` 並拋 `RuntimeError`，**不讓 repo 卡在 rebase 中影響下週排程**（這點很重要：若卡住，下週會以另一種方式再失敗一次）。
+
+**3. `update_sunday.py`：本機失敗告警（Telegram）**
+
+新增 `notify_failure()`，走 `~/.hermes/.env` 的 `TELEGRAM_BOT_TOKEN`／`TELEGRAM_HOME_CHANNEL`（僅單向讀 token 發訊息，**不涉及 Hermes agent 的任何授權，網站專案未納入 Hermes 管控範圍**）。`__main__` 包 try/except，任何未攔截例外都發告警並 `exit 1`；`date_fetch_failed` 在本機也改為發 Telegram（原本只寫 `$GITHUB_OUTPUT`，本機執行時那個變數根本不存在，等於沒作用）。另把兩處 `update_table` 失敗的靜默 `return` 改為 `raise`，讓它們也走得到告警。
+
+**4. 排程錯開：GH Actions 改為週五 09:00（台北）**
+
+`cron: '0 13 * * 4'` → `'0 1 * * 5'`。本機週四 21:00 為主，Actions 隔天早上才跑，本機失敗時它才真正有機會補上——這樣備援才是備援。
+
+### 測試結果
+
+- ✅ **`pull --rebase` 正常路徑**：scratchpad 建 bare repo + 兩個 clone，模擬「另一台電腦先推了 commit」（即 8/6 的真實情境）。舊版必爆的情況下，新版自動 rebase 後 push 成功，遠端兩邊 commit 都在。
+- ✅ **rebase 衝突路徑**：兩邊改同一檔同一行，正確拋出 `RuntimeError`，且 `.git/rebase-merge`／`rebase-apply` 均不存在，**確認 abort 乾淨、不會卡到下週**。
+- ✅ **Telegram 告警管道實測**：實際呼叫 `notify_failure()` 發出測試訊息，API 未拋錯、log 顯示「已發出 Telegram 失敗告警」。（**待用戶確認手機是否真的收到**，見待辦）
+- ✅ **端對端（launchd 實跑）**：`launchctl kickstart -k` 觸發 `com.jesusway.update-sunday-v2`，`last exit code = 0`，完整跑完並正確判定「主日 ph4CzZdSHAE 已在表格中，跳過 → 無更新，結束」，確認改動未破壞正常流程。
+- ✅ **正式站已更新**：Pages 部署 `31289925701` success，`https://www.jesuswaytaipei.org/sunday.html` 最新一筆為 **2026.08.02**，`last-modified: Sun, 09 Aug 2026 02:14:58 GMT`。
+- ✅ Python 語法檢查 `py_compile` 通過。
+- ⚠️ **未執行：正式站的實際瀏覽器畫面／RWD 驗證**（用戶中止該步驟）。本次只新增一列表格資料、未動版面與 CSS，風險低，但依規則此項仍屬**未驗證**，不宣稱通過。
+- ⚠️ **未驗證：修好的排程在真實排程時間自動跑一次**。下次真實驗證點見待辦。
+
+### 待辦 / 觀察重點
+
+- **請確認 Telegram 是否收到那則測試告警**（訊息內容標示「這是測試訊息，可忽略」）。若沒收到，`~/.hermes/.env` 的 `TELEGRAM_HOME_CHANNEL` 可能不是你在看的頻道，需改收件目標——**告警管道沒通，等於這次修的東西白修**。
+- **2026-08-13（週四）21:00** 觀察本機是否自動成功；**2026-08-14（週五）09:00** 觀察 GH Actions 補救層是否正確回報「無新內容」。這是排程錯開後的第一次真實驗證。
+- YouTube 對 CI 限流屬間歇性問題，這次仍未根治（只是讓它不再是唯一防線）。若警告持續出現，再考慮加 retry 或改用 YouTube Data API。
+- 多台電腦共用此 repo 的情況會持續發生，**在別台電腦改網站後，本機下次動手前先 `git pull`**，可減少 rebase 衝突機率。
 
 ---
 

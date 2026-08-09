@@ -62,9 +62,12 @@
 - **本機：** launchd 服務 `com.jesusway.update-sunday-v2`（2026-07-17 起，取代舊的 `com.jesusway.update-sunday`），每週四 21:00，使用 `/opt/homebrew/bin/python3`
   - 舊版曾因 macOS TCC 保護 `~/Documents` 資料夾，導致 launchd 幫 job 設定 stdout/stderr 重導向時 spawn 直接失敗（`EX_CONFIG`），跟電腦睡眠無關（先前記載的睡眠假設有誤，已更正）。新版把 launchd 層的 log 改寫到 `~/Library/Logs/jesusway/`（不受 TCC 限制），並補上原本缺少的 `PATH`/`HOME` 環境變數
   - push 走 SSH deploy key（`~/.ssh/id_ed25519_jesusway`，僅此 repo write 權限），remote 為 `git@github-jesusway:jesuswaytaipeisrv/jesuswaytaipei.git`，不再需要 GitHub Desktop
-- **GitHub Actions：** `.github/workflows/update_sunday.yml`，每週四 13:00 UTC（= 21:00 UTC+8）自動觸發（實際常晚幾小時，屬 GH Actions 排程正常延遲），自動 push，並寄更新通知信至 jesuswaytaipeisrv@gmail.com
+  - push 前會先 `git pull --rebase` 併入遠端（2026-08-09 起）。多台電腦共用此 repo，遠端若被別台推過，不 rebase 就 push 必被拒；衝突時自動 `rebase --abort` 並拋錯，不讓 repo 卡在 rebase 中影響下週
+  - 執行失敗時發 Telegram 告警（2026-08-09 起），token 取自 `~/.hermes/.env` 的 `TELEGRAM_BOT_TOKEN`／`TELEGRAM_HOME_CHANNEL`。本機失敗原本完全靜默，只寫進沒人看的 log
+- **GitHub Actions：** `.github/workflows/update_sunday.yml`，每週五 01:00 UTC（= 09:00 UTC+8）自動觸發，自動 push，並寄更新通知信至 jesuswaytaipeisrv@gmail.com
   - 若找到候選影片但 yt-dlp 抓不到日期（常見於 YouTube 對 CI 限流），會寄警告信（⚠️ 開頭主旨），跟「本週真的沒新內容」明確區分，避免靜默漏更新
-- 兩套機制互為備援
+- **兩套機制的分工（2026-08-09 起）：** 本機週四 21:00 為主，GH Actions 隔天週五早上才跑，作為本機失敗時的補救層。
+  原本兩邊都排週四 21:00，正常週永遠是本機先完成、Actions 只會回報「無新內容」，備援等於從未被真正驗證過
 - Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）
 - 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`（需 `GOOGLE_API_KEY`）
 - GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
