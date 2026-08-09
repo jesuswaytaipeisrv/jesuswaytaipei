@@ -129,7 +129,7 @@ Actions run `31114567788` 標記 **success**，實際輸出「ℹ️ 無新內�
 
 - ✅ **`pull --rebase` 正常路徑**：scratchpad 建 bare repo + 兩個 clone，模擬「另一台電腦先推了 commit」（即 8/6 的真實情境）。舊版必爆的情況下，新版自動 rebase 後 push 成功，遠端兩邊 commit 都在。
 - ✅ **rebase 衝突路徑**：兩邊改同一檔同一行，正確拋出 `RuntimeError`，且 `.git/rebase-merge`／`rebase-apply` 均不存在，**確認 abort 乾淨、不會卡到下週**。
-- ✅ **Telegram 告警管道實測**：實際呼叫 `notify_failure()` 發出測試訊息，API 未拋錯、log 顯示「已發出 Telegram 失敗告警」。（**待用戶確認手機是否真的收到**，見待辦）
+- ✅ **Telegram 告警管道實測**：實際呼叫 `notify_failure()` 發出測試訊息，API 未拋錯、log 顯示「已發出 Telegram 失敗告警」，**用戶已確認實際收到訊息**，管道端對端可用。
 - ✅ **端對端（launchd 實跑）**：`launchctl kickstart -k` 觸發 `com.jesusway.update-sunday-v2`，`last exit code = 0`，完整跑完並正確判定「主日 ph4CzZdSHAE 已在表格中，跳過 → 無更新，結束」，確認改動未破壞正常流程。
 - ✅ **正式站已更新**：Pages 部署 `31289925701` success，`https://www.jesuswaytaipei.org/sunday.html` 最新一筆為 **2026.08.02**，`last-modified: Sun, 09 Aug 2026 02:14:58 GMT`。
 - ✅ Python 語法檢查 `py_compile` 通過。
@@ -138,7 +138,7 @@ Actions run `31114567788` 標記 **success**，實際輸出「ℹ️ 無新內�
 
 ### 待辦 / 觀察重點
 
-- **請確認 Telegram 是否收到那則測試告警**（訊息內容標示「這是測試訊息，可忽略」）。若沒收到，`~/.hermes/.env` 的 `TELEGRAM_HOME_CHANNEL` 可能不是你在看的頻道，需改收件目標——**告警管道沒通，等於這次修的東西白修**。
+- ~~確認 Telegram 是否收到測試告警~~ → **已確認收到（2026-08-09）**，`~/.hermes/.env` 的 `TELEGRAM_HOME_CHANNEL` 就是有效收件頻道，本機失敗不再靜默。
 - **2026-08-13（週四）21:00** 觀察本機是否自動成功；**2026-08-14（週五）09:00** 觀察 GH Actions 補救層是否正確回報「無新內容」。這是排程錯開後的第一次真實驗證。
 - YouTube 對 CI 限流屬間歇性問題，這次仍未根治（只是讓它不再是唯一防線）。若警告持續出現，再考慮加 retry 或改用 YouTube Data API。
 - 多台電腦共用此 repo 的情況會持續發生，**在別台電腦改網站後，本機下次動手前先 `git pull`**，可減少 rebase 衝突機率。
