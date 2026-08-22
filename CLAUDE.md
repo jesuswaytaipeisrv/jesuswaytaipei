@@ -61,6 +61,7 @@
 - GitHub Actions：`.github/workflows/update_sunday.yml`，**2026-08-09 起改為每週五 09:00（台北）**，即本機跑完隔天早上才跑，作為本機失敗時的補救層（原本與本機同排週四 21:00，備援從未被真正驗證過，見 2026-08-09 記錄）
 - Log（僅本機執行會寫）：`logs/update_sunday.log`
 - **失敗告警（2026-07-17 起）**：若找到符合關鍵字的候選影片、但 yt-dlp 抓不到日期（常見於 YouTube 對 GitHub Actions 限流），會寄警告信到 `jesuswaytaipeisrv@gmail.com`（主旨開頭 ⚠️），提醒人工確認或到 Actions 頁面 Re-run。這種情況 workflow 本身仍會顯示綠色 success，只能靠這封信才看得出來漏更新了
+  - **⚠️ 這封信會誤報，收到不等於漏更新（2026-08-22 查證）**：判斷依據是「日期解析失敗」，但 CI 環境本來就常被 YouTube 限流而抓不到日期，只要頻道上還有符合關鍵字的影片就會週週寄信。07-30～08-20 連續 4 次都是誤報，網站實際都是最新的。收到信請先照 2026-08-22 記錄的方式確認候選影片是否已收錄，再決定要不要補跑
 - **本機失敗告警（2026-08-09 起）**：本機 launchd 執行失敗時發 **Telegram** 訊息（token 取自 `~/.hermes/.env`）。CI 端的信箱 `jesuswaytaipeisrv@gmail.com` 不是日常會看的信箱，2026-08-06 那封警告信就是這樣被忽略的
 
 **`update_sunday.py` 一次更新的檔案：**
@@ -79,6 +80,70 @@
 | 標題裝飾 | 左側黃色 border（`border-l-4 border-yellow-400`）|
 | 圓角卡片 | `rounded-2xl shadow-sm border border-gray-100` |
 | Hero 背景圖 | `assets/images/site_bkg.png` |
+
+---
+
+## 本次修改記錄（2026-08-22）— 週四排程執行確認：排程正常，⚠️ 警告信查證為誤報
+
+### 背景
+使用者要求確認 2026-08-20（週四）的排程是否執行完成。本次**未修改任何程式碼**，只做查證與文件更新。
+
+### 查證結果：兩層排程都正常，網站沒有漏更新
+- **本機 launchd（主）準時完成**：commit `6fa86a0 feat: 自動更新 主日 2026.08.16「華麗變身 甚至忘了己身（帖撒」`，時間 2026-08-20 13:00:11 UTC＝台北 **21:00:11**，準點。
+- **內容確實上站**（不是只有 commit）：`https://www.jesuswaytaipei.org/sunday.html` HTTP 200，表格最新一列為 **2026.08.16**。
+- **GitHub Actions（補救層）依 2026-08-09 的錯開設定正常運作**：run #13 於 2026-08-21 02:24 UTC＝台北 10:24 觸發（排程為週五 01:00 UTC，GH 延遲約 1.4 小時，屬正常範圍），判定 `changed=false`，未重複 push。錯開設計如預期生效。
+
+### ⚠️ 警告信是誤報（本次最重要的結論）
+GitHub Actions 已連續 4 次（07-30、08-06、08-13、08-20 各週）寄出 ⚠️ 警告信，但**每一次網站其實都是最新的**。
+
+run #13 log 顯示兩支候選影片的日期都抓不到：
+```
+[WARNING] 標題無日期，改用 yt-dlp 抓取：9IplXYflXjI
+[WARNING] android client 失敗，改用預設 client 重試：9IplXYflXjI
+[ERROR]   無法取得 9IplXYflXjI 的上傳日期（標題、upload_date、描述皆無法解析）
+[ERROR]   無法取得 kAjSqxnf1JU 的上傳日期
+[ERROR]   有候選影片但日期解析失敗，本次可能漏更新，請人工確認
+```
+繞過 yt-dlp、改用 YouTube oEmbed + watch page 直接查這兩支影片，證實兩支都早已收錄：
+
+| 候選 ID | 標題 | 上傳日 | 站上狀態 |
+|---|---|---|---|
+| `9IplXYflXjI` | 華麗變身 甚至忘了己身（帖後 1:1-12）｜吳必然 牧師 | 2026-08-16 | 已在 `sunday.html`，即本機排程當晚寫入那筆 |
+| `kAjSqxnf1JU` | 《樣青講堂》想戀愛又想做自己，真的可以嗎？｜Flora | **2026-05-24** | 已在 `youth.html`，就是最新那一列 |
+
+**樣青講堂自 2026.05.24 後頻道上就沒有新影片**，表格停在 05.24 是正確的，不是被跳過。
+
+**誤報成因：** `update_sunday.py` 用「日期解析失敗」當作漏更新的判斷依據，但在 CI 環境日期本來就常被 YouTube 限流而抓不到，於是無法區分「已是最新」與「真的漏了」，只要頻道上還有符合關鍵字的影片就會週週誤報。
+
+### 已釐清的舊疑點：youth.html 沒有 2026.06.28 那列是正常的
+`4820b3d` 曾寫入「樣青 2026.06.28」，但目前頁面上沒有該列——查證後確認是 `cb6589f remove: 2026.06.28 葉如凡場次影片已下架，移除樣青講堂列表項目` 刻意人工移除，非漏更新或被覆蓋。**日後再看到這個落差不必重查。**
+
+### 查證方式（可重複執行，皆為唯讀）
+```bash
+# 1. 排程執行紀錄與逐步驟結果（公開 repo，免認證）
+curl -s "https://api.github.com/repos/jesuswaytaipeisrv/jesuswaytaipei/actions/workflows/update_sunday.yml/runs?per_page=5"
+curl -s "https://api.github.com/repos/jesuswaytaipeisrv/jesuswaytaipei/actions/runs/<run_id>/jobs"
+# 關鍵：看 "Send date-fetch-failed warning email" 這步是 success 還是 skipped，
+#      success 就代表當次寄了 ⚠️ 信；workflow 整體仍為綠色 success，看 conclusion 看不出來
+
+# 2. 完整 log（需 PAT，取自 Keychain）
+TOK=$(printf 'protocol=https\nhost=github.com\n\n' | git credential fill | sed -n 's/^password=//p')
+curl -sL -H "Authorization: Bearer $TOK" \
+  "https://api.github.com/repos/jesuswaytaipeisrv/jesuswaytaipei/actions/runs/<run_id>/logs" -o run.zip
+
+# 3. 不靠 yt-dlp 查影片標題與上傳日（繞過 CI 限流，本機沒裝 yt-dlp 也能查）
+curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=<vid>&format=json"
+curl -s "https://www.youtube.com/watch?v=<vid>" | grep -oE '"uploadDate":"[^"]+"'
+
+# 4. 判斷影片是否已收錄（不需要日期）
+grep -c '<vid>' sunday.html en/sunday.html youth.html en/youth.html
+```
+
+### 待辦 / 觀察重點
+- **【未做，待決定】改用 video_id 比對取代日期判斷來決定是否告警。** 候選影片的 ID 若已出現在表格的 `embed/<id>` 連結中即視為已收錄、不告警；完全不需要日期，天然繞開 YouTube 對 CI 的限流。已驗證可行性：`grep -c kAjSqxnf1JU youth.html` → 1、`grep -c 9IplXYflXjI sunday.html` → 1。改動範圍僅限 `update_sunday.py` 的告警判斷段（約 194–203、360–369 行），不動抓取與寫表邏輯。
+  - 若要施作，驗收條件：(a) 候選 ID 已在表格中 → 不寄 ⚠️ 信；(b) 候選 ID 不在表格中 → 仍寄 ⚠️ 信。兩條路徑都要實測過才 commit。
+- 在上述修法完成前，**收到 ⚠️ 信不要直接當成漏更新去補跑**，先用上面第 3、4 條指令確認候選影片是否已收錄。
+- 本機無 `gh` CLI、亦未裝 `yt-dlp`（家用機），需要查排程一律走上面的 REST API 方式。
 
 ---
 
