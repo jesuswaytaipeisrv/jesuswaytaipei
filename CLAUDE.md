@@ -106,7 +106,7 @@
 
 **Gemini API key**
 - 變數名是 `GOOGLE_API_KEY`，**不是** `GEMINI_API_KEY`。全部專案裡只有這裡不一樣，是刻意保留的現狀；三處必須一致：`update_sunday.py`（翻譯函式）、`.github/workflows/update_sunday.yml`、GitHub repo secret。2026-06 就是因為 script 寫 `GEMINI_API_KEY`、`.env` 實際是 `GOOGLE_API_KEY` 而壞過一次（見 `@docs/DEVLOG.md`），要改名三處一起改。（2026-08-30）
-- **這把是 AI Studio 五把裡的哪一把，目前不明，別再花時間查**：值只存在 GitHub repo secret，secret 單向寫入讀不回來，本機也沒有 `.env` 可比對。要弄清楚只有一條路——直接指定一把去覆蓋 secret，把未知變成已知，然後把結尾四碼記回這裡。（2026-08-30）
+- **這把 key 屬於 Cloud 專案 `website-jesusway`（`gen-lang-client-0734466101`，2026-06-05 建立）**。AI Studio 是**一個專案配一把 key**，依專案名稱與建立日對應而得（來源：使用者的 Gemini 計費架構筆記）。secret 的值本身讀不回來（單向寫入），也不需要讀——要換就直接在該專案下開新 key 覆蓋 secret。⚠️ 換的時候留意：Google 已對**新建立的專案**停售 `gemini-2.5-flash`，而 `update_sunday.py` 正是用它，所以新 key 必須開在 `website-jesusway` 底下，不要另開專案。（2026-08-30）
 
 **環境差異（三台電腦輪流維護）**
 - 本機路徑因機器而異（`~/documents/website/`、`~/Documents/Claude/Projects/jesuswaytaipei/`），**這是正常的，不要「修正」成單一路徑**。動手前先 `git pull`。
