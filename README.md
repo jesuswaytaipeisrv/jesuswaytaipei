@@ -71,6 +71,10 @@
 - Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）
 - 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`（需 `GOOGLE_API_KEY`）
 - GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
+- 金鑰所屬 Cloud 專案為 **`website-jesusway`（`gen-lang-client-0734466101`）**。
+  ⚠️ **要換 key 必須開在該專案底下**——Google 已對新建立的專案停售 `gemini-2.5-flash`，
+  而翻譯正是用它。另注意變數名是 `GOOGLE_API_KEY` 不是 `GEMINI_API_KEY`，
+  三處（腳本、workflow、repo secret）必須一致，詳見 `CLAUDE.md` 的「已知地雷」。
 
 ### 手動補跑方式
 ```bash
