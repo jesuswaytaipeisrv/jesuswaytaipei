@@ -104,6 +104,10 @@
 - 刻意**不設「排除內部流量」**（對外是 HiNet 浮動 IP，規則會默默失效）。要做請改用 GA Opt-out 瀏覽器擴充。（2026-08-06）
 - GitHub Pages 憑證卡住不簽出時，解法是做**一次**乾淨的 Remove → 等 2 分鐘 → 重填 Custom domain。（2026-06-17）
 
+**Gemini API key**
+- 變數名是 `GOOGLE_API_KEY`，**不是** `GEMINI_API_KEY`。全部專案裡只有這裡不一樣，是刻意保留的現狀；三處必須一致：`update_sunday.py`（翻譯函式）、`.github/workflows/update_sunday.yml`、GitHub repo secret。2026-06 就是因為 script 寫 `GEMINI_API_KEY`、`.env` 實際是 `GOOGLE_API_KEY` 而壞過一次（見 `@docs/DEVLOG.md`），要改名三處一起改。（2026-08-30）
+- **這把是 AI Studio 五把裡的哪一把，目前不明，別再花時間查**：值只存在 GitHub repo secret，secret 單向寫入讀不回來，本機也沒有 `.env` 可比對。要弄清楚只有一條路——直接指定一把去覆蓋 secret，把未知變成已知，然後把結尾四碼記回這裡。（2026-08-30）
+
 **環境差異（三台電腦輪流維護）**
 - 本機路徑因機器而異（`~/documents/website/`、`~/Documents/Claude/Projects/jesuswaytaipei/`），**這是正常的，不要「修正」成單一路徑**。動手前先 `git pull`。
 - 自動化 push 用的 SSH deploy key 只在實際跑排程那台；其他機器用 HTTPS + Keychain PAT push，兩者並存正常。
