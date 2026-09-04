@@ -51,20 +51,28 @@ def load_env():
 # ── 失敗告警 ──────────────────────────────────────────────────────────
 def notify_failure(subject, detail):
     """
-    本機 launchd 執行失敗時發 Telegram 通知。
+    執行失敗時發 Telegram 通知，本機與 CI 兩端共用。
 
-    CI 端的告警由 workflow 的 send-mail step 負責，這裡只處理本機——本機失敗原本
-    完全靜默，只寫進沒人會去看的 log 檔（2026-08-06 事故即因此整週未被察覺）。
-    token 取自 ~/.hermes/.env，僅單向讀取來發訊息，不涉及 Hermes agent 的任何授權。
+    本機失敗原本完全靜默，只寫進沒人會去看的 log 檔（2026-08-06 事故即因此整週未被察覺）；
+    CI 端原本改寄 email 到 jesuswaytaipeisrv@gmail.com，同樣不是會被看到的信箱
+    （2026-07-30～09-04 連續六次限流告警全部沒被讀到），2026-09-04 起兩邊都改走 Telegram。
+    token 本機取自 ~/.hermes/.env、CI 取自 Actions secrets，僅單向讀取來發訊息，
+    不涉及 Hermes agent 的任何授權。
     """
-    if os.environ.get("GITHUB_ACTIONS"):
-        return
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_HOME_CHANNEL")
     if not token or not chat_id:
         logging.error("未設定 TELEGRAM_BOT_TOKEN／TELEGRAM_HOME_CHANNEL，無法發出失敗告警")
         return
-    text = f"⚠️ 台北樣教會網站自動更新：{subject}\n\n{detail}\n\nlog：{LOG_FILE}"
+    # CI 沒有 log 檔可看，改附該次 workflow 執行的連結
+    if os.environ.get("GITHUB_ACTIONS"):
+        run_url = (f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/"
+                   f"{os.environ.get('GITHUB_REPOSITORY', '')}/actions/runs/"
+                   f"{os.environ.get('GITHUB_RUN_ID', '')}")
+        source, where = "GitHub Actions 補救層", f"執行紀錄：{run_url}"
+    else:
+        source, where = "本機排程", f"log：{LOG_FILE}"
+    text = f"⚠️ 台北樣教會網站自動更新（{source}）：{subject}\n\n{detail}\n\n{where}"
     try:
         import urllib.request
         import urllib.parse
@@ -191,14 +199,28 @@ def fetch_latest_streams(max_items=25):
         else:
             logging.warning("樣青講堂取得日期失敗")
 
+    # 日期抓不到時，改用「候選影片是否已在站上表格」決定要不要告警。
+    # 原本以「日期解析失敗」為依據，但 YouTube 對 CI 環境限流會讓日期週週抓不到，
+    # 2026-07-30～09-04 連續六次告警全是假警報（站上其實都是最新的，2026-08-22 已查證）。
+    # 比對影片 ID 不需要日期，天然繞開限流，只有「頻道上有、站上沒有」才是真的可能漏更新。
+    def missing_from_site(candidate, filename):
+        if not candidate:
+            return False
+        vid = candidate[0]
+        if is_video_in_table(WEBSITE_DIR / filename, vid):
+            logging.info(f"{vid} 日期抓不到，但已在 {filename} 表格中，站上已是最新，不告警")
+            return False
+        logging.error(f"{vid} 日期抓不到，且不在 {filename} 表格中，可能漏更新")
+        return True
+
     date_fetch_failed = False
     if not latest_sunday:
         logging.warning("找不到新的主日信息")
-        if sunday_candidate:
+        if missing_from_site(sunday_candidate, "sunday.html"):
             date_fetch_failed = True
     if not latest_youth:
         logging.warning("找不到新的樣青講堂")
-        if youth_candidate:
+        if missing_from_site(youth_candidate, "youth.html"):
             date_fetch_failed = True
     return latest_sunday, latest_youth, date_fetch_failed
 
@@ -356,6 +378,12 @@ def main():
     setup_logging()
     load_env()
     logging.info("=== update_sunday.py 開始 ===")
+
+    # 手動觸發用的告警自我檢查。這個批次過去的教訓就是「備援從未被驗證過」，
+    # 而告警只有真的故障時才會發，平時無從得知它還通不通。
+    if os.environ.get("TEST_ALERT") == "true":
+        notify_failure("【測試訊息，可忽略】告警管道自我檢查",
+                       "這是手動觸發的測試，不是真實故障。收得到就代表告警管道正常。")
 
     latest_sunday, latest_youth, date_fetch_failed = fetch_latest_streams()
 

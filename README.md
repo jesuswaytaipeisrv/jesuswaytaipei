@@ -65,7 +65,9 @@
   - push 前會先 `git pull --rebase` 併入遠端（2026-08-09 起）。多台電腦共用此 repo，遠端若被別台推過，不 rebase 就 push 必被拒；衝突時自動 `rebase --abort` 並拋錯，不讓 repo 卡在 rebase 中影響下週
   - 執行失敗時發 Telegram 告警（2026-08-09 起），token 取自 `~/.hermes/.env` 的 `TELEGRAM_BOT_TOKEN`／`TELEGRAM_HOME_CHANNEL`。本機失敗原本完全靜默，只寫進沒人看的 log
 - **GitHub Actions：** `.github/workflows/update_sunday.yml`，每週五 01:00 UTC（= 09:00 UTC+8）自動觸發，自動 push，並寄更新通知信至 jesuswaytaipeisrv@gmail.com
-  - 若找到候選影片但 yt-dlp 抓不到日期（常見於 YouTube 對 CI 限流），會寄警告信（⚠️ 開頭主旨），跟「本週真的沒新內容」明確區分，避免靜默漏更新
+  - **告警（2026-09-04 起）**：CI 端也改發 Telegram（secrets `TELEGRAM_BOT_TOKEN`／`TELEGRAM_HOME_CHANNEL`），同時把該次執行標成紅色失敗；原本寄 ⚠️ 警告信到 `jesuswaytaipeisrv@gmail.com` 的做法已移除
+  - **告警依據是「候選影片 ID 不在站上表格中」**，不是「yt-dlp 抓不到日期」。CI 被 YouTube 限流抓不到日期是常態，用日期當依據會週週假警報（07-30～09-04 六次全誤報）
+  - 驗證告警管道是否還通：`gh workflow run update_sunday.yml -f test_alert=true`
 - **兩套機制的分工（2026-08-09 起）：** 本機週四 21:00 為主，GH Actions 隔天週五早上才跑，作為本機失敗時的補救層。
   原本兩邊都排週四 21:00，正常週永遠是本機先完成、Actions 只會回報「無新內容」，備援等於從未被真正驗證過
 - Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）

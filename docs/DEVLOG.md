@@ -10,6 +10,78 @@
 
 ---
 
+## 本次修改記錄（2026-09-04）— 本週排程確認、告警改走 Telegram、誤報修掉、yt-dlp 升級
+
+### 背景
+使用者要求確認本週（09-03 週四）排程是否完成。查證結論是**完成**，但沿鏈路查的過程中發現
+告警機制本身有兩個問題，一併修掉。**本次修改 `update_sunday.py` 與 workflow，未動網站內容。**
+
+### 一、本週排程查證：完成，網站是最新的
+沿整條鏈路走到正式站，逐段證據：
+
+| 環節 | 結果 |
+|---|---|
+| launchd 觸發 | 09-03（四）21:00:02，`last exit code = 0` |
+| 抓取 | 25 筆影片，樣青講堂 2026.08.30 為新內容 |
+| 寫入 | `youth.html` 與 `en/youth.html` 都改到 |
+| commit | `723425c` |
+| push | `pull --rebase` 後推成 `e411787`，本機與遠端 0 差異 |
+| Pages 部署 | 09-03 21:00 台北那次 deploy success |
+| 正式站實際內容 | `youth.html`／`en/youth.html` 皆顯示 **2026.08.30** |
+
+**主日停在 2026.08.23 是正確的**：`/streams` 最新主日就是 `cj9TAOIjbgU`，`upload_date` 實測
+`20260823`；`/videos` 分頁最近 8 支全是敬拜音樂與樣青食堂，**教會尚未上 8/30 的線上主日**。
+
+### 二、告警改走 Telegram（CI 端）
+CI 端原本寄信到 `jesuswaytaipeisrv@gmail.com`，那不是會被看到的信箱（2026-08-06 事故即因此
+整週未被察覺）。本次讓 `notify_failure()` 本機與 CI 共用：拿掉原本的 `GITHUB_ACTIONS` 早退，
+CI 端的訊息改附該次 workflow 執行連結（本機仍附 log 路徑）。
+
+- workflow 移除 `Send date-fetch-failed warning email` 步驟，改為 `Fail the run when dates could not be fetched`
+  ——**同時把該次執行標成紅色失敗**。過去六次限流 workflow 全部回報 success，Actions 頁面的綠燈
+  等於說謊；紅燈是 Telegram 之外的第二層訊號，就算 Telegram 壞了也看得出來。
+- 新增 repo secrets `TELEGRAM_BOT_TOKEN`、`TELEGRAM_HOME_CHANNEL`（與本機 `~/.hermes/.env` 同一支
+  Hermes bot，使用者 2026-09-04 明示採此做法）。值以 stdin 餵給 `gh secret set`，未進命令列參數。
+
+### 三、把「⚠️ 誤報」真正修掉（2026-08-22 列為待辦，本次施作）
+2026-08-22 已查證那封 ⚠️ 信是誤報，並寫下正解「改用 video_id 比對取代日期判斷」但**未施作**。
+本次若只把告警改到 Telegram 而不修這個，**下週五起每週都會有一次紅燈加一則手機通知，且每次都是
+假警報**——那會讓人開始忽略 Telegram，而本機真實故障的告警走同一條管道，比原本沒人看的信箱更糟。
+
+改法：告警判斷不再看「日期是否解析成功」，改看**候選影片 ID 是否已在站上表格中**
+（`fetch_latest_streams()` 內新增 `missing_from_site()`，沿用既有的 `is_video_in_table()`）。
+比對 ID 不需要日期，天然繞開 YouTube 對 CI 的限流。只有「頻道上有、站上沒有」才告警。
+
+### 四、其他修正
+- **`GOOGLE_API_KEY` 注入的是不存在的 secret**：workflow 寫 `secrets.GOOGLE_API_KEY`，但 repo 裡的
+  secret 名為 `GEMINI_API_KEY` → CI 拿到空字串 → 翻譯被靜默跳過、英文頁只會填中文標題。已改為
+  `secrets.GEMINI_API_KEY`。這個 bug 一直沒被發現，是因為 CI 從沒真的寫入過內容。
+- **新增 `TEST_ALERT` 自我檢查**：`workflow_dispatch` 加一個 `test_alert` 輸入，打開時先發一則測試
+  Telegram 再照常執行。這個批次的歷史教訓就是「備援從未被驗證過」，而告警平時無從得知還通不通。
+- **本機 yt-dlp 由 2026.03.17 升到 2026.08.19**（brew，非 pip——它的過期警告訊息會誤導）。
+
+### 測試結果
+| # | 測試 | 結果 |
+|---|---|---|
+| 1 | yt-dlp 升級後：`--flat-playlist` 頻道列表 | ✅ 正常取得 25 筆 |
+| 2 | yt-dlp 升級後：`player_client=android` 取日期 | ✅ 回 `20260823`（僅有 SABR 格式警告，取 metadata 不受影響） |
+| 3 | yt-dlp 升級後：預設 client 取日期 | ✅ 回 `20260823` |
+| 4 | 完整腳本端對端（升級後、改動後各一次） | ✅ 兩支都正確判定「已在表格中，跳過」，無多餘 commit |
+| 5 | 告警驗收 (a)：候選 ID 已在表格中 → 不告警 | ✅ `date_fetch_failed = False` |
+| 6 | 告警驗收 (b)：候選 ID 不在表格中 → 仍告警 | ✅ `date_fetch_failed = True` |
+| 7 | Telegram 本機模式 | ✅ 實際收到，附 log 路徑 |
+| 8 | Telegram 模擬 CI 模式 | ✅ 實際收到，附 workflow 執行連結 |
+
+第 5、6 項的手法：攔截 `subprocess.run` 讓「取日期」那支 yt-dlp 回空字串（等同 CI 被限流的實際
+狀況），頻道列表那支仍走真實網路，確保測到的是真實候選影片；(b) 另以一份空表格的假站台目錄比對。
+測試腳本寫在 scratchpad，未留在 repo。
+
+### 待確認
+- **CI 端真的發出 Telegram，尚未在 GitHub 上實測**（本機只驗到模擬 CI 環境）。用
+  `gh workflow run update_sunday.yml -f test_alert=true` 觸發一次即可驗證 secret 有正確注入。
+
+---
+
 ## 本次修改記錄（2026-08-22）— 週四排程執行確認：排程正常，⚠️ 警告信查證為誤報
 
 ### 背景
