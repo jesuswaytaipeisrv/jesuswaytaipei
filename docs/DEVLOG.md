@@ -76,9 +76,18 @@ CI 端的訊息改附該次 workflow 執行連結（本機仍附 log 路徑）�
 狀況），頻道列表那支仍走真實網路，確保測到的是真實候選影片；(b) 另以一份空表格的假站台目錄比對。
 測試腳本寫在 scratchpad，未留在 repo。
 
-### 待確認
-- **CI 端真的發出 Telegram，尚未在 GitHub 上實測**（本機只驗到模擬 CI 環境）。用
-  `gh workflow run update_sunday.yml -f test_alert=true` 觸發一次即可驗證 secret 有正確注入。
+### CI 端實測（run 33882433189，已結案）
+push 後以 `gh workflow run update_sunday.yml -f test_alert=true` 觸發，**該次 CI 又真的被 YouTube
+限流**，等於在真實故障條件下一次驗到三件事：
+
+| 驗到什麼 | 證據 |
+|---|---|
+| secrets 有正確注入 | log 顯示 `TELEGRAM_BOT_TOKEN: ***`、`TELEGRAM_HOME_CHANNEL: ***` |
+| CI 端 Telegram 發得出去 | `[INFO] 已發出 Telegram 失敗告警`，手機實際收到，訊息標明「GitHub Actions 補救層」 |
+| 誤報已擋掉 | 兩支影片日期照樣抓不到，但 `cj9TAOIjbgU／Dv7X_mTSzHc 已在表格中，站上已是最新，不告警`，
+`date_fetch_failed` 未觸發、執行維持綠燈、沒有發出假警報 |
+
+**至此本次修改無待確認項目。**
 
 ---
 
