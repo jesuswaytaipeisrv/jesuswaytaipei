@@ -123,11 +123,19 @@ step 條件與名稱同步改掉。
 A～H 的手法同前：攔截 `subprocess.run` 控制 yt-dlp 的回傳，另建一份「中文有、英文缺」的假站台
 目錄測半完成狀態。測試腳本在 scratchpad，未留在 repo。
 
+#### 複審後的 CI 端實測（run 33883980587）
+push 後以 `gh workflow run update_sunday.yml` 觸發，**該次 CI 又被 YouTube 限流**（日期照樣抓不到），
+正好在真實故障條件下驗到：
+
+| 驗到什麼 | 證據 |
+|---|---|
+| 權限修正生效 | 「Set up job」的 `GITHUB_TOKEN Permissions` 區塊由原本的唯讀變成 **`Contents: write`** |
+| 中英文比對走的是新路徑 | `cj9TAOIjbgU／Dv7X_mTSzHc 日期抓不到，但中英文表格皆已有，站上已是最新，不告警`（訊息文字是新版的） |
+| 沒有 `ValueError`、沒有假警報 | 25 筆取得成功、`check_failed` 未觸發、執行 **success**、Telegram 無訊息 |
+
 #### 尚未驗證（誠實記錄）
-- **第 5 項的 `contents: write` 沒辦法端對端驗**：要驗到 CI 真的 push 成功，必須剛好遇到
-  「本機失敗 + CI 沒被限流 + 頻道上真的有新影片」三件事同時發生。設定值本身正確
-  （`default_workflow_permissions` 是 `read`，宣告 `contents: write` 是官方文件指定的解法），
-  但**「CI 寫入路徑從未被實際跑過」這件事在此之前與此之後都成立**。
+- **CI 真的 `git push` 成功這件事仍未驗過**。token 現在確實帶著 `Contents: write`（上表），
+  但要驗到最後一哩，得剛好遇到「本機失敗 + CI 沒被限流 + 頻道上真的有新影片」三件事同時發生。
 - 下次真的輪到補救層寫入時，這是第一個要看的地方。
 
 ---
