@@ -51,7 +51,7 @@ def load_env():
 # ── 失敗告警 ──────────────────────────────────────────────────────────
 def notify_failure(subject, detail):
     """
-    執行失敗時發 Telegram 通知，本機與 CI 兩端共用。
+    執行失敗時發 Telegram 通知，本機與 CI 兩端共用。回傳是否確實送出。
 
     本機失敗原本完全靜默，只寫進沒人會去看的 log 檔（2026-08-06 事故即因此整週未被察覺）；
     CI 端原本改寄 email 到 jesuswaytaipeisrv@gmail.com，同樣不是會被看到的信箱
@@ -63,7 +63,7 @@ def notify_failure(subject, detail):
     chat_id = os.environ.get("TELEGRAM_HOME_CHANNEL")
     if not token or not chat_id:
         logging.error("未設定 TELEGRAM_BOT_TOKEN／TELEGRAM_HOME_CHANNEL，無法發出失敗告警")
-        return
+        return False
     # CI 沒有 log 檔可看，改附該次 workflow 執行的連結
     if os.environ.get("GITHUB_ACTIONS"):
         run_url = (f"{os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/"
@@ -81,8 +81,10 @@ def notify_failure(subject, detail):
         with urllib.request.urlopen(req, timeout=15) as resp:
             resp.read()
         logging.info("已發出 Telegram 失敗告警")
+        return True
     except Exception as e:
         logging.error(f"發送 Telegram 告警失敗：{e}")
+        return False
 
 
 # ── YouTube 抓取（一次掃描同時找主日與樣青）────────────────────────────
@@ -93,6 +95,7 @@ def fetch_latest_streams(max_items=25):
     回傳：
       latest_sunday: (date_fmt, raw_title, video_id) 或 None
       latest_youth:  (date_fmt, raw_title, video_id) 或 None
+      failure_reason: 無法確認站上是否最新時的原因字串，正常時為 None
     """
     logging.info("抓取 YouTube 頻道影片列表（一次取 ID + 標題）")
     r = subprocess.run(
@@ -101,8 +104,10 @@ def fetch_latest_streams(max_items=25):
         capture_output=True, text=True, timeout=60
     )
     if r.returncode != 0:
+        # 這正是本批次最常見的故障（CI 被 YouTube 限流），必須帶著失敗原因回去發告警，
+        # 不能只回兩個 None——呼叫端解三個值，回兩個會變成 ValueError，訊息完全走樣。
         logging.error(f"yt-dlp flat-playlist 失敗：{r.stderr.strip()[:200]}")
-        return None, None
+        return None, None, f"yt-dlp 取不到頻道影片列表：{r.stderr.strip()[:200]}"
 
     entries = []
     for line in r.stdout.strip().split("\n"):
@@ -113,6 +118,12 @@ def fetch_latest_streams(max_items=25):
         entries.append((vid.strip(), title.strip()))
 
     logging.info(f"取得 {len(entries)} 筆影片")
+    if not entries:
+        # exit code 0 但空清單：限流或反機器人偵測時會這樣回。
+        # 此時連候選影片 ID 都沒有，下面的「站上有沒有這支」比對無從做起，
+        # 若不在這裡擋掉，會靜靜地判定「本週無新內容」而漏更新。
+        logging.error("yt-dlp 回傳 0 筆影片，無法判斷是否有新內容")
+        return None, None, "yt-dlp 回傳 0 筆影片（exit code 0 但清單為空），無法判斷本週有無新影片。"
 
     sunday_candidate = None
     youth_candidate  = None
@@ -203,26 +214,33 @@ def fetch_latest_streams(max_items=25):
     # 原本以「日期解析失敗」為依據，但 YouTube 對 CI 環境限流會讓日期週週抓不到，
     # 2026-07-30～09-04 連續六次告警全是假警報（站上其實都是最新的，2026-08-22 已查證）。
     # 比對影片 ID 不需要日期，天然繞開限流，只有「頻道上有、站上沒有」才是真的可能漏更新。
-    def missing_from_site(candidate, filename):
+    # 中英文兩頁都要看：只看中文頁的話，「中文寫進去了、英文那次沒寫成」的半完成狀態
+    # 會被判定成「站上已是最新」，英文頁永遠補不上也不會告警。
+    def missing_from_site(candidate, *filenames):
         if not candidate:
             return False
         vid = candidate[0]
-        if is_video_in_table(WEBSITE_DIR / filename, vid):
-            logging.info(f"{vid} 日期抓不到，但已在 {filename} 表格中，站上已是最新，不告警")
+        absent = [f for f in filenames if not is_video_in_table(WEBSITE_DIR / f, vid)]
+        if not absent:
+            logging.info(f"{vid} 日期抓不到，但中英文表格皆已有，站上已是最新，不告警")
             return False
-        logging.error(f"{vid} 日期抓不到，且不在 {filename} 表格中，可能漏更新")
+        logging.error(f"{vid} 日期抓不到，且不在 {'、'.join(absent)} 表格中，可能漏更新")
         return True
 
-    date_fetch_failed = False
+    missing = []
     if not latest_sunday:
         logging.warning("找不到新的主日信息")
-        if missing_from_site(sunday_candidate, "sunday.html"):
-            date_fetch_failed = True
+        if missing_from_site(sunday_candidate, "sunday.html", "en/sunday.html"):
+            missing.append("主日信息")
     if not latest_youth:
         logging.warning("找不到新的樣青講堂")
-        if missing_from_site(youth_candidate, "youth.html"):
-            date_fetch_failed = True
-    return latest_sunday, latest_youth, date_fetch_failed
+        if missing_from_site(youth_candidate, "youth.html", "en/youth.html"):
+            missing.append("樣青講堂")
+    reason = None
+    if missing:
+        reason = (f"偵測到{'、'.join(missing)}有站上還沒有的新影片，但抓不到日期，本次未寫入網站。"
+                  "常見原因是 YouTube 限流。")
+    return latest_sunday, latest_youth, reason
 
 # ── 主日：標題與講員解析 ──────────────────────────────────────────────
 def parse_sunday_title_speaker(raw_title):
@@ -306,6 +324,25 @@ def translate_to_english(zh_title, zh_person, context="主日信息"):
         return None, None
 
 # ── HTML 行產生 ───────────────────────────────────────────────────────
+def sync_video_row(zh_path, en_path, video_id, row_zh, row_en, label):
+    """
+    把同一支影片寫進中英文兩張表格，逐檔判斷是否已存在。
+
+    逐檔判斷是為了修復半完成狀態：中文寫成功、英文那次拋錯時，中文檔案已經落地，
+    若沿用「中文頁有就整段跳過」的判斷，英文頁會永遠補不上（違反中英同步規則）。
+    已有的略過、缺的才補，所以不會重複插入。回傳實際寫入的檔案相對路徑。
+    """
+    written = []
+    for path, row, rel in ((zh_path, row_zh, zh_path.name),
+                           (en_path, row_en, f"en/{en_path.name}")):
+        if is_video_in_table(path, video_id):
+            logging.info(f"{label} {video_id} 已在 {rel} 表格中，跳過")
+            continue
+        if not update_table(path, row):
+            raise RuntimeError(f"{label}寫入 {rel} 失敗（找不到 tbody 或 tr 標記），略過 commit")
+        written.append(rel)
+    return written
+
 def build_row(date, title, person, video_id, watch_label="觀看 →"):
     return (
         f'                        <tr class="hover:bg-yellow-50 transition">\n'
@@ -382,22 +419,25 @@ def main():
     # 手動觸發用的告警自我檢查。這個批次過去的教訓就是「備援從未被驗證過」，
     # 而告警只有真的故障時才會發，平時無從得知它還通不通。
     if os.environ.get("TEST_ALERT") == "true":
-        notify_failure("【測試訊息，可忽略】告警管道自我檢查",
-                       "這是手動觸發的測試，不是真實故障。收得到就代表告警管道正常。")
+        # 送不出去就直接讓這次執行失敗。否則管道壞掉（token 被輪替、chat_id 改了）時
+        # 這個自我檢查照樣綠燈，等於驗了個寂寞。
+        if not notify_failure("【測試訊息，可忽略】告警管道自我檢查",
+                              "這是手動觸發的測試，不是真實故障。收得到就代表告警管道正常。"):
+            logging.error("告警自我檢查失敗：Telegram 沒送出去，請檢查 token 與 chat_id")
+            sys.exit(1)
+        logging.info("告警自我檢查：Telegram 已送出")
 
-    latest_sunday, latest_youth, date_fetch_failed = fetch_latest_streams()
+    latest_sunday, latest_youth, failure_reason = fetch_latest_streams()
 
-    if date_fetch_failed:
-        # 找到候選影片（標題關鍵字符合），但 yt-dlp 抓不到日期（title/upload_date/描述皆失敗）。
-        # 這與「本週真的沒有新影片」不同，若不特別標記，workflow 仍會回報 success，沒人知道漏更新了。
-        logging.error("有候選影片但日期解析失敗，本次可能漏更新，請人工確認（常見原因：YouTube 對 CI 環境限流）")
+    if failure_reason:
+        # 「無法確認站上是不是最新」與「本週真的沒有新影片」外觀相同，
+        # 不特別標記的話 workflow 會回報 success，沒人知道漏更新了。
+        logging.error(f"本次可能漏更新，請人工確認：{failure_reason}")
         gh_output = os.environ.get("GITHUB_OUTPUT")
         if gh_output:
             with open(gh_output, "a") as f:
-                f.write("date_fetch_failed=true\n")
-        notify_failure("可能漏更新",
-                       "偵測到符合關鍵字的新影片，但抓不到日期，本次未寫入網站。"
-                       "常見原因是 YouTube 限流，請人工確認或稍後重跑。")
+                f.write("check_failed=true\n")
+        notify_failure("可能漏更新", failure_reason + "請人工確認或稍後重跑。")
 
     updated_files = []
     commit_parts  = []
@@ -406,9 +446,10 @@ def main():
     if latest_sunday:
         date, raw_title, video_id = latest_sunday
         sunday_zh = WEBSITE_DIR / "sunday.html"
+        sunday_en = WEBSITE_DIR / "en" / "sunday.html"
 
-        if is_video_in_table(sunday_zh, video_id):
-            logging.info(f"主日 {video_id} 已在表格中，跳過")
+        if is_video_in_table(sunday_zh, video_id) and is_video_in_table(sunday_en, video_id):
+            logging.info(f"主日 {video_id} 中英文表格皆已有，跳過")
         else:
             title_zh, speaker_zh = parse_sunday_title_speaker(raw_title)
             logging.info(f"主日中文 → 題目：{title_zh}  講員：{speaker_zh}")
@@ -419,13 +460,11 @@ def main():
                 title_en, speaker_en = title_zh, speaker_zh
                 logging.warning("主日英文版暫用中文標題，請 push 前手動確認")
 
-            ok_zh = update_table(sunday_zh, build_row(date, title_zh, speaker_zh, video_id, "觀看 →"))
-            ok_en = update_table(WEBSITE_DIR / "en" / "sunday.html",
-                                 build_row(date, title_en, speaker_en, video_id, "Watch →"))
-            if not ok_zh or not ok_en:
-                raise RuntimeError("主日信息寫入 HTML 失敗（找不到 tbody 或 tr 標記），略過 commit")
-
-            updated_files += ["sunday.html", "en/sunday.html"]
+            updated_files += sync_video_row(
+                sunday_zh, sunday_en, video_id,
+                build_row(date, title_zh, speaker_zh, video_id, "觀看 →"),
+                build_row(date, title_en, speaker_en, video_id, "Watch →"),
+                "主日")
             note = "（英文暫用中文）" if en_fallback else ""
             commit_parts.append(f"主日 {date}「{title_zh[:15]}」{note}")
 
@@ -433,9 +472,10 @@ def main():
     if latest_youth:
         date, raw_title, video_id = latest_youth
         youth_zh = WEBSITE_DIR / "youth.html"
+        youth_en = WEBSITE_DIR / "en" / "youth.html"
 
-        if is_video_in_table(youth_zh, video_id):
-            logging.info(f"樣青 {video_id} 已在表格中，跳過")
+        if is_video_in_table(youth_zh, video_id) and is_video_in_table(youth_en, video_id):
+            logging.info(f"樣青 {video_id} 中英文表格皆已有，跳過")
         else:
             title_zh, guest_zh = parse_youth_title_guest(raw_title)
             logging.info(f"樣青中文 → 主題：{title_zh}  來賓：{guest_zh}")
@@ -446,13 +486,11 @@ def main():
                 title_en, guest_en = title_zh, guest_zh
                 logging.warning("樣青英文版暫用中文，請 push 前手動確認")
 
-            ok_zh = update_table(youth_zh, build_row(date, title_zh, guest_zh, video_id, "觀看 →"))
-            ok_en = update_table(WEBSITE_DIR / "en" / "youth.html",
-                                 build_row(date, title_en, guest_en, video_id, "Watch →"))
-            if not ok_zh or not ok_en:
-                raise RuntimeError("樣青講堂寫入 HTML 失敗（找不到 tbody 或 tr 標記），略過 commit")
-
-            updated_files += ["youth.html", "en/youth.html"]
+            updated_files += sync_video_row(
+                youth_zh, youth_en, video_id,
+                build_row(date, title_zh, guest_zh, video_id, "觀看 →"),
+                build_row(date, title_en, guest_en, video_id, "Watch →"),
+                "樣青")
             note = "（英文暫用中文）" if en_fallback else ""
             commit_parts.append(f"樣青 {date}「{title_zh[:15]}」{note}")
 

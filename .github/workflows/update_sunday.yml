@@ -14,6 +14,11 @@ on:
         type: boolean
         default: false
 
+permissions:
+  # 這個 repo 的 GITHUB_TOKEN 預設權限是 read（2026-09-04 用 API 查證），
+  # 補救層真的輪到它寫入時 git push 會被 403 擋下。CI 從未真的寫入過，所以一直沒暴露。
+  contents: write
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -54,7 +59,7 @@ jobs:
           TEST_ALERT: ${{ inputs.test_alert }}
         run: python update_sunday.py
 
-      - name: Check for changes and build email body
+      - name: Check for changes and build notification body
         id: check
         run: |
           CURRENT_SHA=$(git rev-parse HEAD)
@@ -93,10 +98,10 @@ jobs:
             ──────────────────────────
             此信由 GitHub Actions 自動發送，請勿直接回覆。
 
-      - name: Fail the run when dates could not be fetched
-        if: steps.update.outputs.date_fetch_failed == 'true'
+      - name: Fail the run when the site could not be confirmed up to date
+        if: steps.update.outputs.check_failed == 'true'
         run: |
-          echo "::error::偵測到符合關鍵字的新影片，但 yt-dlp 抓不到日期，本次未寫入網站。"
+          echo "::error::無法確認網站是否已是最新（抓不到影片清單或抓不到日期），本次未寫入網站。"
           echo "常見原因：YouTube 對 GitHub Actions 執行環境限流／防機器人偵測。"
           echo "處理方式：先重跑本 workflow（Re-run jobs）；仍失敗就在本機手動執行 update_sunday.py 補上。"
           # 告警訊息已由 update_sunday.py 的 notify_failure() 發到 Telegram。

@@ -89,6 +89,47 @@ push 後以 `gh workflow run update_sunday.yml -f test_alert=true` 觸發，**�
 
 **至此本次修改無待確認項目。**
 
+### 五、`/code-review` 複審與後續修正（同日）
+上述改動 push 後跑了一輪 `/code-review`（Claude Code 內建，等級 high，範圍 `e411787..baab025`），
+提出五項發現，逐條實地查證後**五項全部屬實**，已全部修掉。
+
+| # | 問題 | 具體後果 | 修法 |
+|---|---|---|---|
+| 1 | `fetch_latest_streams()` 在 flat-playlist 失敗時 `return None, None`（兩元組），`main()` 卻解三個值 | **正好在限流時炸掉**——`ValueError: not enough values to unpack`，Telegram 收到的是「排程執行失敗：ValueError」而非真正原因，`$GITHUB_OUTPUT` 也永遠寫不進去 | 改回傳三元組，第三個值由 bool 改為**失敗原因字串** |
+| 2 | `entries` 為空（exit code 0 但空清單，限流時常見）完全沒防護 | 兩個 candidate 都是 None → 新的 ID 比對法無 ID 可比 → 判定「本週無新內容」、綠燈、不告警。正是本次要消滅的靜默漏更新 | 0 筆直接視為失敗並帶原因 |
+| 3 | `TEST_ALERT` 自我檢查在管道壞掉時照樣綠燈 | `notify_failure()` 送不出去只 `logging.error`，不影響 exit code；token 被輪替後跑自我檢查會誤判「管道正常」 | `notify_failure()` 回傳成敗，`TEST_ALERT` 模式送不出去就 `sys.exit(1)` |
+| 4 | 站上比對只看中文頁 | 中文寫成功、英文那次拋錯時，中文檔案已落地，之後每次都判定「站上已是最新」→ **英文頁永遠補不上且不告警**，違反中英同步規則 | `missing_from_site()` 改吃多個檔名，中英文都比對 |
+| 5 | workflow 沒宣告 `permissions` | 以 API 查得該 repo `default_workflow_permissions` 是 **`read`**，補救層真的輪到它 push 時會被 403 擋掉。CI 從未真的寫入過，所以這個問題一直沒暴露 | 加上 `permissions: contents: write` |
+
+第 4 項連帶改掉 `main()` 的跳過判斷：原本「中文頁有這支 ID 就整段跳過」，改為新的
+`sync_video_row()` **逐檔判斷、已有的略過、缺的才補**，所以半完成狀態下次執行會自動修復，
+也不會重複插入。第 1、2 項連帶把 workflow output 由 `date_fetch_failed` 更名為 `check_failed`
+（現在的意思是「無法確認站上是否最新」，涵蓋抓不到清單與抓不到日期兩種），workflow 對應的
+step 條件與名稱同步改掉。
+
+#### 複審後的測試結果
+| # | 測試 | 結果 |
+|---|---|---|
+| A | flat-playlist 失敗（模擬 429）→ 回三元組不炸 | ✅ 帶原因「yt-dlp 取不到頻道影片列表：HTTP Error 429…」 |
+| B | exit 0 但 0 筆 → 判為失敗 | ✅ 帶原因，不再靜默通過 |
+| C | 真實站台、ID 中英文皆有 → 不告警 | ✅ `reason is None`（誤報仍然沒有回來） |
+| D | ID 不在站上 → 告警 | ✅ |
+| E | 中文頁有、英文頁缺 → 告警 | ✅ 修正前這裡會誤判成「已是最新」 |
+| F | `sync_video_row()` 只補缺的那頁 | ✅ 回 `['en/sunday.html']`，中文頁維持 1 次出現、未重複插入 |
+| G | `TEST_ALERT=true` 但 token 不存在 | ✅ exit code = 1（修正前是 0） |
+| H | `notify_failure()` 送出成功回傳 `True` | ✅（攔截 `urlopen`，未真的發訊息） |
+| I | 完整腳本真實端對端 | ✅ 25 筆、兩支都「中英文表格皆已有，跳過」、無 commit、exit 0 |
+
+A～H 的手法同前：攔截 `subprocess.run` 控制 yt-dlp 的回傳，另建一份「中文有、英文缺」的假站台
+目錄測半完成狀態。測試腳本在 scratchpad，未留在 repo。
+
+#### 尚未驗證（誠實記錄）
+- **第 5 項的 `contents: write` 沒辦法端對端驗**：要驗到 CI 真的 push 成功，必須剛好遇到
+  「本機失敗 + CI 沒被限流 + 頻道上真的有新影片」三件事同時發生。設定值本身正確
+  （`default_workflow_permissions` 是 `read`，宣告 `contents: write` 是官方文件指定的解法），
+  但**「CI 寫入路徑從未被實際跑過」這件事在此之前與此之後都成立**。
+- 下次真的輪到補救層寫入時，這是第一個要看的地方。
+
 ---
 
 ## 本次修改記錄（2026-08-22）— 週四排程執行確認：排程正常，⚠️ 警告信查證為誤報

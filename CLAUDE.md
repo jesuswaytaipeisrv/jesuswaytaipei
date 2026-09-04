@@ -63,7 +63,8 @@
 - **失敗告警（2026-09-04 起，本機與 CI 統一走 Telegram）**：兩層都由 `notify_failure()` 發 Telegram，本機 token 取自 `~/.hermes/.env`、CI 取自 repo secrets `TELEGRAM_BOT_TOKEN`／`TELEGRAM_HOME_CHANNEL`（同一支 Hermes bot）。訊息會標明來源是「本機排程」還是「GitHub Actions 補救層」，本機附 log 路徑、CI 附該次 workflow 執行連結
   - **告警依據是「候選影片 ID 不在站上表格中」，不是「日期抓不到」**（2026-09-04 改）。CI 被 YouTube 限流抓不到日期是常態，用日期當依據會週週假警報；比對 ID 不需要日期，天然繞開限流
   - **CI 遇到這種情況會讓該次執行變紅色失敗**（2026-09-04 起）。在此之前六次限流 workflow 全部回報 success，Actions 頁面的綠燈等於說謊；紅燈是 Telegram 之外的第二層訊號
-  - **要驗告警管道還通不通**：`gh workflow run update_sunday.yml -f test_alert=true`，會先發一則標明「測試訊息」的 Telegram 再照常執行更新
+  - **要驗告警管道還通不通**：`gh workflow run update_sunday.yml -f test_alert=true`，會先發一則標明「測試訊息」的 Telegram 再照常執行更新。**送不出去該次執行會直接紅燈**（2026-09-04 複審後補），綠燈才代表管道真的通
+  - 觸發告警的情形有三種，都會寫 workflow output `check_failed=true`（2026-09-04 由 `date_fetch_failed` 更名）：抓不到頻道清單、清單回 0 筆、候選影片 ID 不在站上表格中
   - 舊做法（已淘汰）：2026-07-17～09-04 CI 端是寄信到 `jesuswaytaipeisrv@gmail.com`，那不是日常會看的信箱，2026-08-06 那封警告信就是這樣被忽略的；且該信自 07-30 起連續六次都是誤報
 
 **`update_sunday.py` 一次更新的檔案：**
@@ -99,6 +100,8 @@
 - YouTube 對 GitHub Actions 共用 IP 限流是常態，**CI 抓不到日期不是程式 bug**（本機同一支影片 ID 測試正常）。（2026-07-02、2026-07-17）
 - 頻道標題格式會變（日期前綴曾被整批拿掉）。日期解析依序：標題前綴 → `upload_date` → 描述欄「日期：YYYY/MM/DD」。格式再變時先檢查這三層。（2026-06-19、2026-07-02）
 - ⚠️ 舊的警告信會週週誤報（依據是「日期解析失敗」）。**2026-09-04 已改為比對候選影片 ID 是否已在表格中，並改走 Telegram**；現在收到告警＝頻道上有、站上沒有，才需要處理。（2026-08-22 查證、2026-09-04 修）
+- **這個 repo 的 `GITHUB_TOKEN` 預設權限是 `read`**（2026-09-04 以 API 查證），所以 workflow 必須自己宣告 `permissions: contents: write`，否則補救層真的要 push 時會被 403 擋掉。**CI 的寫入路徑至今從未真的跑過**，第一次輪到它時要先看這裡。（2026-09-04）
+- 判斷「這支影片是不是已經在站上」時，**中英文兩頁都要比對**。只看中文頁的話，「中文寫成功、英文那次失敗」的半完成狀態會被判成最新，英文頁永遠補不上也不會告警。`sync_video_row()` 已改為逐檔判斷、缺的才補，不會重複插入。（2026-09-04 複審發現）
 - workflow 注入 `GOOGLE_API_KEY` 時要引用 **`secrets.GEMINI_API_KEY`**（兩邊名稱不同）。2026-09-04 前寫成 `secrets.GOOGLE_API_KEY`（不存在）→ 空字串 → CI 的翻譯被靜默跳過。（2026-09-04）
 - 本機 yt-dlp 是 **brew 裝的**（`brew upgrade yt-dlp`）。它自己的過期警告會說「你是用 pip 裝的」，那是誤導。（2026-09-04）
 - `youth.html` 沒有 2026.06.28 那列是**影片下架後刻意移除**（`cb6589f`），不是漏更新。（2026-08-22）
@@ -123,7 +126,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
-- **2026-09-04** — 本週排程確認、告警改走 Telegram、⚠️ 誤報修掉、yt-dlp 升級
+- **2026-09-04** — 本週排程確認、告警改走 Telegram、⚠️ 誤報修掉、yt-dlp 升級；同日 `/code-review` 複審後再修五項（限流時的 `ValueError`、空清單靜默通過、自我檢查假通過、只比對中文頁、CI 缺 `contents: write`）
 - **2026-08-22** — 週四排程執行確認：排程正常，⚠️ 警告信查證為誤報
 - **2026-08-09** — 08-06 漏更新排查、補推上線、git 併推與告警修復
 - **2026-08-06** — 導入 Google Analytics 4

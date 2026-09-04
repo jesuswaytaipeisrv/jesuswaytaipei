@@ -67,7 +67,8 @@
 - **GitHub Actions：** `.github/workflows/update_sunday.yml`，每週五 01:00 UTC（= 09:00 UTC+8）自動觸發，自動 push，並寄更新通知信至 jesuswaytaipeisrv@gmail.com
   - **告警（2026-09-04 起）**：CI 端也改發 Telegram（secrets `TELEGRAM_BOT_TOKEN`／`TELEGRAM_HOME_CHANNEL`），同時把該次執行標成紅色失敗；原本寄 ⚠️ 警告信到 `jesuswaytaipeisrv@gmail.com` 的做法已移除
   - **告警依據是「候選影片 ID 不在站上表格中」**，不是「yt-dlp 抓不到日期」。CI 被 YouTube 限流抓不到日期是常態，用日期當依據會週週假警報（07-30～09-04 六次全誤報）
-  - 驗證告警管道是否還通：`gh workflow run update_sunday.yml -f test_alert=true`
+  - 驗證告警管道是否還通：`gh workflow run update_sunday.yml -f test_alert=true`（送不出去該次執行會紅燈，綠燈才算通）
+  - 告警條件：抓不到頻道清單、清單回 0 筆，或候選影片 ID **不在站上中英文表格中**（中英文兩頁都會比對）
 - **兩套機制的分工（2026-08-09 起）：** 本機週四 21:00 為主，GH Actions 隔天週五早上才跑，作為本機失敗時的補救層。
   原本兩邊都排週四 21:00，正常週永遠是本機先完成、Actions 只會回報「無新內容」，備援等於從未被真正驗證過
 - Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）
