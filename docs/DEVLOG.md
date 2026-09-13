@@ -32,7 +32,7 @@
 ### 本機為什麼沒推：這台查不到
 家用機沒有 launchd job、沒有 `logs/update_sunday.log`、沒有 `~/.hermes/.env`。要看本機那層的失敗原因，
 得到裝 launchd 的那台看 `~/Library/Logs/jesusway/update_sunday_launchd.log` 與 `logs/update_sunday.log`（09-10 21:00 那段）。
-**Telegram 那則 09-11 05:43（UTC）的告警是有發出去的**，使用者沒看到或沒處理，值得一併確認頻道通知有沒有開。
+**Telegram 那則 09-11 05:43（UTC）的告警有發出去、使用者也有看到**（09-13 確認），只是還沒空處理——告警管道本身沒問題，不必查。
 
 ### 補上方式
 不用 Gemini 翻譯（家用機沒有 key），直接 `import update_sunday` 呼叫 `parse_sunday_title_speaker()` → `build_row()` → `sync_video_row()`，
