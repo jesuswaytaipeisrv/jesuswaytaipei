@@ -85,6 +85,11 @@
 read -s GOOGLE_API_KEY && export GOOGLE_API_KEY && /opt/homebrew/bin/python3 ~/documents/website/update_sunday.py
 ```
 
+**補跑的限制（2026-09-13）**：腳本每次只取頻道最新一支「主日」／「樣青講堂」當候選。
+若漏的那支已不是最新（下一場直播已開始），補跑抓不到它，要手動插列——
+在專案目錄 `import update_sunday`，呼叫 `parse_sunday_title_speaker()` → `build_row()` → `sync_video_row()`
+一次寫進中英文兩頁，再 commit push。實例見 `docs/DEVLOG.md` 2026-09-13。
+
 ### 日期取得邏輯（2026-07-02 更新）
 1. 優先從標題開頭 `YYYY.MM.DD` 格式 parse（無額外網路呼叫）——**注意：頻道已於 2026-06 全面拿掉標題日期前綴，這條路徑目前實務上幾乎不會命中**
 2. 標題無日期時，呼叫 yt-dlp 取 `upload_date`，優先用 `player_client=android`（CI 環境限流較少）
