@@ -124,6 +124,9 @@
 
 ## 待辦（跨機器）
 
+- **查 09-10（四）本機 launchd 為何沒推 09-06 主日**（2026-09-13）：家用機查不到，要到裝 launchd 的那台看
+  `~/Library/Logs/jesusway/update_sunday_launchd.log` 與 `logs/update_sunday.log` 09-10 21:00 那段。同週 CI 也限流，兩層同時失敗第一次真的發生。
+- **09-17（四）跑完檢查 `RdE18JKoivM` 的日期**：預排直播 upload_date=0911、release_date=0913，腳本 upload_date 優先，可能寫成 09.11。錯就手動改，常態如此就改 `release_date` 優先。
 - **Codex 複審 `e411787..05f1d65` 尚未跑**（2026-09-04 全部改動）。使用者指定在有 Codex CLI 的那台跑，
   這台沒裝。Claude 這輪 `/code-review` 審的是實作層，Codex 值得看架構層：本機 launchd 與 CI 兩層
   同一週都失敗時如何收斂、`MAX_ROWS=10` 的滾動刪除與 `sync_video_row()` 補寫半完成狀態會不會互相打架。
@@ -136,6 +139,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-09-13** — 09-06 主日 `WqxohQJV9ao` 兩層都漏更新（第一次真漏、非誤報），家用機手動補上；⚠️ 09-13 那支預排直播 upload_date≠release_date，週四跑完要查日期
 - **2026-09-04** — 本週排程確認、告警改走 Telegram、⚠️ 誤報修掉、yt-dlp 升級；同日 `/code-review` 複審後再修五項（限流時的 `ValueError`、空清單靜默通過、自我檢查假通過、只比對中文頁、CI 缺 `contents: write`）
 - **2026-08-22** — 週四排程執行確認：排程正常，⚠️ 警告信查證為誤報
 - **2026-08-09** — 08-06 漏更新排查、補推上線、git 併推與告警修復

@@ -10,6 +10,48 @@
 
 ---
 
+## 本次修改記錄（2026-09-13）— 09-06 主日漏更新排查與手動補上
+
+### 背景
+使用者回報「上週網站更新失敗」。查證結論：**09-06 主日信息 `WqxohQJV9ao`（能改變腦子，不是「聽」，而是「行」）確實漏了**，
+本機 launchd（09-10 四）與 CI 補救層（09-11 五）兩層都沒寫進去。這是告警改走 Telegram 後第一次**真的**漏更新，
+不是誤報。樣青講堂沒漏（頻道上最新仍是 08-30 那支，站上已有）；08-30 沒有主日直播，不是漏。
+
+### 查證證據（在家用機做，唯讀 REST API＋本機 yt-dlp）
+| 環節 | 結果 |
+|---|---|
+| 09-04 之後的 commit | 只有文件 commit，沒有任何「自動更新 主日」commit → 本機 09-10 那次沒推 |
+| CI 09-11 排程 run `34567024225` | **紅燈**（新機制正確運作）：取得 25 筆、候選 `WqxohQJV9ao` 抓不到日期、且不在 sunday 中英文表格 → Telegram 已發、`exit 1` |
+| 09-13 手動 `workflow_dispatch` run `34742412846` | 仍紅燈，同樣限流；但候選已變成 **`RdE18JKoivM`（09-13 當天直播中）**，09-06 那支已被擠到第二筆 |
+| 本機 yt-dlp（家用網路） | `WqxohQJV9ao` upload=release=20260906 was_live，日期正常拿得到；CI 環境就是拿不到 |
+
+### 為什麼不能等週四自動補
+腳本只取頻道清單裡**第一支**符合「主日」的影片當候選。09-13 開播後第一支已是 `RdE18JKoivM`，
+09-06 那支永遠不會再被當候選 → 不手動補就永久缺頁。這是 `fetch_latest_streams()` 的既有設計限制（一週只補一支）。
+
+### 本機為什麼沒推：這台查不到
+家用機沒有 launchd job、沒有 `logs/update_sunday.log`、沒有 `~/.hermes/.env`。要看本機那層的失敗原因，
+得到裝 launchd 的那台看 `~/Library/Logs/jesusway/update_sunday_launchd.log` 與 `logs/update_sunday.log`（09-10 21:00 那段）。
+**Telegram 那則 09-11 05:43（UTC）的告警是有發出去的**，使用者沒看到或沒處理，值得一併確認頻道通知有沒有開。
+
+### 補上方式
+不用 Gemini 翻譯（家用機沒有 key），直接 `import update_sunday` 呼叫 `parse_sunday_title_speaker()` → `build_row()` → `sync_video_row()`，
+英文標題人工翻：*What Changes the Mind Is Not "Hearing" but "Doing"* ／ Pastor Pijan Wu。
+中英文各插一列、各滾掉最舊的 2026.06.14（維持 10 列）。commit 後 push，Pages 部署驗證見下。
+
+### 測試
+- `grep -c WqxohQJV9ao sunday.html en/sunday.html` 各 1；`<tr class="hover` 各 10 列
+- diff 只動 `<tbody>` 內兩列（新增 09.06、移除 06.14），`<head>` 的 GA 片段未動
+- 正式站驗證：push 後看 Pages deploy 與 `https://www.jesuswaytaipei.org/sunday.html` 是否出現 2026.09.06
+
+### ⚠️ 下週要盯的點（未施作）
+`RdE18JKoivM` 是預先排定的直播：yt-dlp 回 `upload_date=20260911`、`release_date=20260913`。
+腳本 `fetch_date()` 用 `%(upload_date,release_date)s`，**upload_date 優先** → 09-17 週四自動更新可能把它寫成 `2026.09.11`（週五）。
+過去幾支 was_live 的 upload 與 release 都相同所以沒踩到；這支開播後 upload_date 會不會被 YouTube 改成 09-13 未知，
+週四跑完要檢查日期，錯了就手動改；若常態如此，改成 `release_date` 優先。
+
+---
+
 ## 本次修改記錄（2026-09-04）— 本週排程確認、告警改走 Telegram、誤報修掉、yt-dlp 升級
 
 ### 背景
