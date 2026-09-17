@@ -124,8 +124,9 @@
 
 ## 待辦（跨機器）
 
-- **查 09-10（四）本機 launchd 為何沒推 09-06 主日**（2026-09-13）：家用機查不到，要到裝 launchd 的那台看
-  `~/Library/Logs/jesusway/update_sunday_launchd.log` 與 `logs/update_sunday.log` 09-10 21:00 那段。同週 CI 也限流，兩層同時失敗第一次真的發生。
+- ~~查 09-10（四）本機 launchd 為何沒推 09-06 主日~~ **已在龍蝦查過（2026-09-17）**：兩份 log 09-10 都**一行沒有**，launchd 根本沒觸發；
+  機器當時醒著、設定正確、21:19 人工重開機；unified log 已輪替，觸發為何被跳過查不到。詳見 `@docs/DEVLOG.md` 2026-09-17 段。
+  **09-17（四）21:00 跑完要看 `update_sunday_launchd.log` 有沒有新段落**，再發生就加本機層心跳（對策寫在同段）。
 - **09-17（四）跑完檢查 `RdE18JKoivM` 的日期**：預排直播 upload_date=0911、release_date=0913，腳本 upload_date 優先，可能寫成 09.11。錯就手動改，常態如此就改 `release_date` 優先。
 - **Codex 複審 `e411787..05f1d65` 尚未跑**（2026-09-04 全部改動）。使用者指定在有 Codex CLI 的那台跑，
   這台沒裝。Claude 這輪 `/code-review` 審的是實作層，Codex 值得看架構層：本機 launchd 與 CI 兩層
