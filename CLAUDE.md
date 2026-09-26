@@ -55,6 +55,8 @@
 |------|------|------|
 | `update_sunday.py` | 本機 launchd 週四 21:00（主）＋ GitHub Actions 週五 09:00（補救層，2026-08-09 起錯開） | 抓最新主日信息與樣青講堂，更新4個 HTML 表格，git commit **並自動 push**（2026-07-02 起兩邊都自動 push，不必手動） |
 
+| `heartbeat.py` | 本機 launchd 週五 10:07（**只裝在龍蝦**，服務名 `com.jesusway.update-sunday-heartbeat`） | 事後複查上一晚的批次有沒有真的讓使用者看到新內容；異常才發 Telegram，純觀測不自動修。判準見「自動更新心跳」節 |
+
 - launchd 服務：`com.jesusway.update-sunday-v2`（2026-07-17 起，取代舊的 `com.jesusway.update-sunday`，見下方修改記錄）
   - 舊的「電腦睡眠導致跳過觸發」推測**已證實是誤判**（2026-07-17 查證：當天電腦全程開機未睡眠，pmset log 無任何 sleep/wake 事件）。真正原因是 launchd 層級的 TCC 權限問題，見下方修改記錄
   - 若懷疑本機那次沒跑，以 GitHub Actions 的執行紀錄或 `sunday.html`/`youth.html` 內容為準，本機 log 沒紀錄不代表沒更新（GitHub Actions 不寫本機 log）
@@ -187,6 +189,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-09-26，第二段** — 新增週五 10:07 心跳（`heartbeat.py` + 只裝龍蝦的 plist）：判準改以結果為準、訊號來源 `logs/last_run.json`、13 情境測試全通過；⚠️ 真實 Telegram 管道尚未實發
 - **2026-09-26** — 09-24 排程結果：準時觸發、內容全對，但被納入版控的 `.DS_Store` 擋掉 `pull --rebase` 導致沒 push；補英文翻譯（Gemini 503 fallback 成中文）、`.DS_Store` 移出版控、`git_commit()` 改用 `rebase.autoStash`
 - **2026-09-24** — 全機排程稽核：09-17 失敗歸因到 macOS 27.0 更新當晚的網路空窗（含告警靜默）、站上缺 `RdE18JKoivM`（09.13 主日）與 `fcmrvY8uMQc`（09.20 樣青）、⚠️ 09-13 留的 `upload_date` 日期疑慮已驗證解除
 - **2026-09-17** — 09-10 本機層漏更新的龍蝦側 log 補查：launchd 根本沒觸發、機器醒著、21:19 人工重開機

@@ -10,6 +10,66 @@
 
 ---
 
+## 本次修改記錄（2026-09-26，第二段）— 新增週五心跳：事後複查「使用者有沒有真的看到新內容」
+
+### 為什麼做
+09-24 那次排程準時跑完、內容全對、commit 也建了，卻因版控中的 `.DS_Store` 擋住 `pull --rebase`
+而沒 push，網站兩天沒更新、log 看起來完全正常。09-17 段原本設想的心跳判準是「檢查當天 log
+有沒有新段落」，那會把 09-24 判成成功。逼問流程跑完後改成以**結果**為判準。
+判準與 11 條驗收條件寫在 `CLAUDE.md`「自動更新心跳」節（先寫條件、再寫程式）。
+
+### 做了什麼
+**1. `update_sunday.py` 每次執行寫 `logs/last_run.json`（機器可讀）**
+`run_at`／`source`／`candidates{主日,樣青}`／`en_fallback`／`pushed`／`failure_reason`／`exit`。
+成功與例外兩條路徑都寫（`write_last_run()` 在 `__main__` 的 try 與 except 各呼叫一次），
+且**先落盤再發告警**——`notify_failure()` 本身在沒網路時也會失敗（09-17 實例），
+那種情況心跳是唯一還會出聲的一層，不能讓它讀到上週的狀態。
+判準不綁在 log 的中文措辭上：改一句文案就讓心跳靜默失效，是這個心跳唯一不能有的失效模式。
+
+**2. 新增 `heartbeat.py`（進版控）＋ `com.jesusway.update-sunday-heartbeat` plist（只裝龍蝦）**
+週五 10:07。四項判準各對應一次真實事故：當天沒有執行紀錄（09-10、07-17）／候選日期與
+`origin/main` 不一致（09-24）／推上去了但線上還是舊的（Pages 間歇逾時）／線上英文頁最新列
+是中文（Gemini 503 靜默 fallback）。另查本機有沒有 ahead。
+異常才出聲；正常安靜；連續 4 週安靜發一則存活訊號；`exit≠0` 但內容正確時發**非 ⚠️** 的低調
+通知（避免重演「綠燈說謊」——主層壞掉、整條鏈路悄悄只剩 CI 在撐）。**純觀測，不 push、不 re-run。**
+
+### 測試
+**判準（13 個情境，攔截 `send()`／`git()`／HTTP，不發訊息、不碰真實 repo）**：
+沒觸發、只有上週紀錄、沒推上去、部署沒生效、英文頁是中文、沒新內容那週靜音、
+本機層失敗但結果正確、連續 4 週安靜、JSON 壞掉、`run_at` 看不懂、本機 ahead、
+測試入口送不出去要非 0 結束、純觀測（靜態檢查無 `push`/`commit`/`rerun`，實跑時 git 只用到
+`fetch`/`status`/`show`）——**全部通過**，逐條對應 `CLAUDE.md` 的 11 條驗收條件。
+
+**端對端（真實資料）**
+- 把 repo `git clone` 到暫存區、`WEBSITE_DIR` 指向複本、Telegram token 置空（`load_env()` 用
+  `setdefault`，所以置空不會被 `.env` 覆寫，確保不誤發訊息），實跑 `update_sunday.py`：
+  正確抓到 `RdE18JKoivM`(09.13)／`fcmrvY8uMQc`(09.20)、兩支都判「已在表格中，跳過」、
+  `last_run.json` 內容正確（candidates 兩筆、`exit: 0`、`pushed: false`）
+- 實跑 `heartbeat.py`（真的 `git show origin/main:`、真的 HTTP 抓線上四頁）：四頁日期全對、
+  英文頁無中文、無 ahead → 判定正常，因 state 空（首次執行）發存活訊號，exit 0
+- **launchd spawn 驗證**：用臨時 plist（`TELEGRAM_BOT_TOKEN` 置空）`kickstart`，
+  `runs = 1`、`last exit code = 1`、log 正確寫到 `~/Library/Logs/jesusway/`、
+  正確判出「讀不到 `last_run.json`」（真實 repo 尚未用新版跑過）、Telegram 如預期沒送出。
+  驗完已 `bootout` 並刪除臨時 plist。這一步是為了避開 07-17 那種「plist 設定看起來對、
+  launchd 卻連 spawn 都失敗」的坑
+- 正式 plist：`plutil -lint` OK、已 `bootstrap`，`launchctl print` 確認觸發器
+  `Weekday 5 / Hour 10 / Minute 7` 已註冊
+
+### ⚠️ 尚未驗證
+**真實 Telegram 管道沒有實發過**。測試全程刻意把 token 置空以免誤發訊息到使用者手機，
+所以「訊息真的會抵達」這件事只驗到程式路徑、沒驗到管道。
+補驗方式（一行，會真的發一則標明「測試訊息」的訊息）：
+```
+HEARTBEAT_TEST_ALERT=true /opt/homebrew/bin/python3 ~/documents/website/heartbeat.py
+```
+
+### 首次正式運作的時序
+10-01（四）21:00 主 job 跑 → 寫 `last_run.json`（這會是 `rebase.autoStash` 的第一次實戰）；
+10-02（五）10:07 心跳第一次正式執行。若 10-01 沒跑成，10-02 的 ⚠️ 就是它第一次真正發揮作用。
+注意首次執行因 state 為空必定會發一則存活訊號，那是預期行為（等於安裝日順便驗一次管道）。
+
+---
+
 ## 本次修改記錄（2026-09-26）— 09-24 排程的兩個尾巴收掉：.DS_Store 擋住 rebase、英文翻譯 503
 
 ### 09-24（四）那次的實際結果：內容全對，卡在 push 前一步

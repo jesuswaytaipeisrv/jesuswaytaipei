@@ -17,6 +17,9 @@ from pathlib import Path
 # ── 設定 ──────────────────────────────────────────────────────────────
 WEBSITE_DIR  = Path(os.environ["WEBSITE_DIR"]) if "WEBSITE_DIR" in os.environ else Path.home() / "documents" / "website"
 LOG_FILE     = WEBSITE_DIR / "logs" / "update_sunday.log"
+# 心跳（heartbeat.py）用的機器可讀結果。判準不綁在 log 的中文措辭上，
+# 否則改一句文案心跳就會靜默失效——那是這個心跳唯一不能有的失效模式。
+LAST_RUN_FILE = WEBSITE_DIR / "logs" / "last_run.json"
 ENV_FILE     = Path.home() / ".hermes" / ".env"
 CHANNEL_URL  = "https://www.youtube.com/@JesuswayTaipei/streams"
 
@@ -49,6 +52,31 @@ def load_env():
                 os.environ.setdefault(k.strip(), v.strip())
 
 # ── 失敗告警 ──────────────────────────────────────────────────────────
+RUN_STATE = {
+    "run_at": None,          # ISO8601，本次開始執行的時間
+    "source": None,          # local / ci
+    "candidates": {},        # {"主日": {"id":…, "date":"2026.09.13"}, "樣青": {…}}
+    "en_fallback": {},       # {"主日": False, "樣青": True} — True 代表英文欄位實際是中文
+    "pushed": False,         # git push 真的成功才是 True
+    "failure_reason": None,  # fetch_latest_streams() 回報的失敗原因
+    "exit": None,            # 0 / 1
+}
+
+
+def write_last_run(exit_code):
+    """把本次執行的機器可讀結果寫進 logs/last_run.json，供 heartbeat.py 判斷。
+
+    成功與失敗兩條路徑都要寫，否則心跳讀到的會是上週的狀態、把失敗判成成功。
+    """
+    RUN_STATE["exit"] = exit_code
+    try:
+        LAST_RUN_FILE.parent.mkdir(parents=True, exist_ok=True)
+        LAST_RUN_FILE.write_text(json.dumps(RUN_STATE, ensure_ascii=False, indent=2),
+                                 encoding="utf-8")
+    except OSError as e:
+        logging.error(f"寫入 {LAST_RUN_FILE.name} 失敗：{e}")
+
+
 def notify_failure(subject, detail):
     """
     執行失敗時發 Telegram 通知，本機與 CI 兩端共用。回傳是否確實送出。
@@ -433,6 +461,8 @@ def main():
     setup_logging()
     load_env()
     logging.info("=== update_sunday.py 開始 ===")
+    RUN_STATE["run_at"] = datetime.now().isoformat(timespec="seconds")
+    RUN_STATE["source"] = "ci" if os.environ.get("GITHUB_ACTIONS") else "local"
 
     # 手動觸發用的告警自我檢查。這個批次過去的教訓就是「備援從未被驗證過」，
     # 而告警只有真的故障時才會發，平時無從得知它還通不通。
@@ -446,6 +476,11 @@ def main():
         logging.info("告警自我檢查：Telegram 已送出")
 
     latest_sunday, latest_youth, failure_reason = fetch_latest_streams()
+
+    RUN_STATE["failure_reason"] = failure_reason
+    for label, latest in (("主日", latest_sunday), ("樣青", latest_youth)):
+        if latest:
+            RUN_STATE["candidates"][label] = {"id": latest[2], "date": latest[0]}
 
     if failure_reason:
         # 「無法確認站上是不是最新」與「本週真的沒有新影片」外觀相同，
@@ -474,9 +509,11 @@ def main():
 
             title_en, speaker_en = translate_to_english(title_zh, speaker_zh, "主日信息")
             en_fallback = not title_en
+            RUN_STATE["en_fallback"]["主日"] = en_fallback
             if en_fallback:
                 title_en, speaker_en = title_zh, speaker_zh
                 logging.warning("主日英文版暫用中文標題，請 push 前手動確認")
+            RUN_STATE["en_fallback"]["主日"] = en_fallback
 
             updated_files += sync_video_row(
                 sunday_zh, sunday_en, video_id,
@@ -500,9 +537,11 @@ def main():
 
             title_en, guest_en = translate_to_english(title_zh, guest_zh, "樣青講堂")
             en_fallback = not title_en
+            RUN_STATE["en_fallback"]["樣青"] = en_fallback
             if en_fallback:
                 title_en, guest_en = title_zh, guest_zh
                 logging.warning("樣青英文版暫用中文，請 push 前手動確認")
+            RUN_STATE["en_fallback"]["樣青"] = en_fallback
 
             updated_files += sync_video_row(
                 youth_zh, youth_en, video_id,
@@ -516,6 +555,7 @@ def main():
     if updated_files:
         msg = "feat: 自動更新 " + "、".join(commit_parts)
         git_commit(updated_files, msg)
+        RUN_STATE["pushed"] = True
         logging.info("=== 完成，已自動 push ===")
     else:
         logging.info("=== 無更新，結束 ===")
@@ -524,7 +564,11 @@ def main():
 if __name__ == "__main__":
     try:
         main()
+        write_last_run(0)
     except Exception as e:
         logging.exception("執行失敗")
+        # 先落盤再發告警：notify_failure() 本身在沒網路時也會失敗（09-17 實例），
+        # 那種情況下心跳是唯一還會出聲的一層，不能讓它讀到上週的狀態。
+        write_last_run(1)
         notify_failure("排程執行失敗", f"{type(e).__name__}: {e}")
         sys.exit(1)

@@ -57,6 +57,7 @@
 | 腳本 | 說明 |
 |------|------|
 | `update_sunday.py` | 每週四 21:00 自動抓最新主日信息與樣青講堂、更新表格、git commit & push（本機、CI 皆自動 push，2026-07-02 起） |
+| `heartbeat.py` | 每週五 10:07 事後複查上一晚的批次**有沒有真的讓使用者看到新內容**（不是只看有沒有跑）。異常才發 Telegram，正常時安靜；連續 4 週安靜就發一則存活訊號。純觀測，不會自己 push |
 
 - 一次執行同時更新 `sunday.html`、`en/sunday.html`、`youth.html`、`en/youth.html`（各維持10筆）
 - **本機：** launchd 服務 `com.jesusway.update-sunday-v2`（2026-07-17 起，取代舊的 `com.jesusway.update-sunday`），每週四 21:00，使用 `/opt/homebrew/bin/python3`
@@ -71,6 +72,13 @@
   - 告警條件：抓不到頻道清單、清單回 0 筆，或候選影片 ID **不在站上中英文表格中**（中英文兩頁都會比對）
 - **兩套機制的分工（2026-08-09 起）：** 本機週四 21:00 為主，GH Actions 隔天週五早上才跑，作為本機失敗時的補救層。
   原本兩邊都排週四 21:00，正常週永遠是本機先完成、Actions 只會回報「無新內容」，備援等於從未被真正驗證過
+- **心跳（2026-09-26 起）：** launchd 服務 `com.jesusway.update-sunday-heartbeat`，**只裝在跑排程的那台（龍蝦）**，每週五 10:07
+  - 排在 CI 補救層（週五 09:00）之後，結論才是「兩層都沒成功」；也避開主 job 被延遲補跑時的時序打架
+  - 訊號來源是主 job 每次執行寫的 `logs/last_run.json`（機器可讀），不解析 log 的中文字串
+  - 四項判準：當天沒有執行紀錄／候選日期與 `origin/main` 不一致／推上去了但線上還是舊的／線上英文頁最新列是中文
+  - Log：`~/Library/Logs/jesusway/heartbeat.log`（腳本自己）+ `heartbeat_launchd.log`（launchd 層）；state：`heartbeat_state.json`
+  - 驗告警管道：`HEARTBEAT_TEST_ALERT=true /opt/homebrew/bin/python3 ~/documents/website/heartbeat.py`（送不出去會以非 0 結束）
+  - 判準的完整理由與 11 條驗收條件在 `CLAUDE.md`「自動更新心跳」節
 - Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）
 - 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`（需 `GOOGLE_API_KEY`）
 - GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
