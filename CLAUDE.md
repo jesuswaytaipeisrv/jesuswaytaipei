@@ -68,6 +68,8 @@
   - 觸發告警的情形有三種，都會寫 workflow output `check_failed=true`（2026-09-04 由 `date_fetch_failed` 更名）：抓不到頻道清單、清單回 0 筆、候選影片 ID 不在站上表格中
   - 舊做法（已淘汰）：2026-07-17～09-04 CI 端是寄信到 `jesuswaytaipeisrv@gmail.com`，那不是日常會看的信箱，2026-08-06 那封警告信就是這樣被忽略的；且該信自 07-30 起連續六次都是誤報
 
+**測試：** `bash tests/run_all.sh`（35 條：心跳判準 27、`git_commit()` 4、`last_run.json` 4）。涵蓋範圍與**沒涵蓋的部分**寫在 `tests/README.md`。
+
 **`update_sunday.py` 一次更新的檔案：**
 - `sunday.html` + `en/sunday.html`（主日信息表格）
 - `youth.html` + `en/youth.html`（樣青講堂表格）
@@ -110,6 +112,7 @@
 **時間戳只在真的送出去時才更新**——送失敗卻記上去，等於讓「管道壞了」被沉默上限判斷成「剛通知過」，於是繼續安靜四週。這個缺陷 2026-09-26 實作當天就踩到並修掉（見 DEVLOG）。
 
 ### 驗收條件（每條都是「使用者做得到 X」，commit 前逐條對照）
+**改判準或改 `heartbeat.py` 之前先跑 `bash tests/run_all.sh`（35 條）**，下面每一條都有對應測試釘住。測試不需要網路／`yt-dlp`／`gh`，也不會發 Telegram，任何一台都能跑。
 1. 週四排程完全沒觸發時，使用者在週五上午收到一則 ⚠️，訊息明說「當天沒有任何執行紀錄」。
 2. 排程跑了但內容沒推上 `origin/main` 時，使用者收到 ⚠️，訊息指出候選日期與站上日期各是什麼。
 3. 內容已推上 `origin/main` 但線上網站還是舊的時候，使用者收到 ⚠️，且能從訊息分辨這是**部署層**而非更新層的問題。
@@ -231,6 +234,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-09-26，第四段** — 測試進版控：`tests/`（35 條，`bash tests/run_all.sh`），三台都能跑、不需網路／`yt-dlp`／`gh`、不發 Telegram；新增 `test_last_run_state.py`
 - **2026-09-26，第三段** — 本機 `/code-review`（high）十項發現全數修掉（2 high：`git fetch` 跑在讀 `origin/main` 之後、CJK 偵測誤報而權威值 `en_fallback` 沒用）；測試 stub 降到 `git()` 層，共 31 條通過
 - **2026-09-26，第二段** — 新增週五 10:07 心跳（`heartbeat.py` + 只裝龍蝦的 plist）：判準改以結果為準、訊號來源 `logs/last_run.json`、13 情境測試全通過；⚠️ 真實 Telegram 管道尚未實發
 - **2026-09-26** — 09-24 排程結果：準時觸發、內容全對，但被納入版控的 `.DS_Store` 擋掉 `pull --rebase` 導致沒 push；補英文翻譯（Gemini 503 fallback 成中文）、`.DS_Store` 移出版控、`git_commit()` 改用 `rebase.autoStash`

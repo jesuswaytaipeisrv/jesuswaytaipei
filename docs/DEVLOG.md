@@ -10,6 +10,51 @@
 
 ---
 
+## 本次修改記錄（2026-09-26，第四段）— 測試進版控（`tests/`，35 條，一個指令跑完）
+
+先前三段的測試都寫在 session 的暫存區，關掉就沒了：程式與判準進了版控、**證據沒有**。
+使用者 2026-09-26 指示整理進 `tests/`。
+
+```
+tests/
+├── run_all.sh                 # bash tests/run_all.sh —— 全部 35 條，約 10 秒
+├── README.md                  # 涵蓋範圍、為什麼 stub 只降到 git()、以及沒涵蓋的部分
+├── test_heartbeat.py          # 27 條：12 條驗收條件 + code review 十項的回歸
+├── test_git_commit.py         # 4 條：autoStash、只在真的卡住才 abort、autoStash × 真衝突
+└── test_last_run_state.py     # 4 條：last_run.json 欄位齊全、SystemExit 也落盤、舊內容會被覆蓋
+```
+
+### 三台都能跑，不會有副作用
+- **不需要網路、不需要 `yt-dlp`、不需要 `gh`**（家用機兩者都沒裝，這是刻意的前提）
+- **不會發任何 Telegram**：token 在測試中置空，而 `load_env()` 用 `setdefault`，置空不會被 `~/.hermes/.env` 覆寫
+- **不碰真實 repo 的 git 狀態**：每個情境用 `tempfile` 建獨立的 bare remote + 兩個 clone
+- **路徑由測試檔自身推導**（`Path(__file__).resolve().parents[1]`）——三台的 repo 路徑各不相同
+  （`~/documents/website`、`~/Documents/Claude/Projects/jesuswaytaipei`），寫死 `Path.home()` 在別台會 import 失敗
+
+### 搬進來時順手補的一支：`test_last_run_state.py`
+code review 第 10 項（`sys.exit(1)` 繞過 `write_last_run()`）當時是用一串手打的 bash 驗的，沒留下腳本。
+現在寫成正式測試，並多釘兩條：JSON 欄位齊全（心跳的判準全靠那幾個欄位）、
+**上一次的 `last_run.json` 一定要被覆蓋**——留著上週的內容會讓心跳誤判「本週沒跑」而看不出真正的故障。
+這支不需要網路：`TEST_ALERT` 的自我檢查在 `fetch_latest_streams()` 之前就結束。
+
+### 為什麼 `tests/README.md` 特別寫「stub 只降到 `git()` 這一層」
+那是這幾輪最有價值的一個修正，而且是靠 code review 才發現的：
+原本把 `remote_page()` 整個換成假的，「`git fetch` 必須先於讀 `origin/main`」就永遠測不到，
+而那正是 high 級缺陷所在。同理英文頁測資改用站上真實的雙語格式
+（`王馥蓓｜Chief Sustainability Advisor, Dentsu Group`），原本純英文的假資料撞不到那個誤報來源。
+**stub 放得太高，盲區就剛好落在「假資料與真實行為的差異」上**——這句寫進 README，
+下次改判準的人（或下一輪的我）才不會重蹈覆轍。
+
+### 文件同步
+- 專案 `CLAUDE.md`：驗收條件段落開頭加「改判準或改 `heartbeat.py` 之前先跑 `bash tests/run_all.sh`」；
+  自動化節補測試指令
+- `README.md`：自動化章節補測試指令與前提
+
+### 測試結果
+`bash tests/run_all.sh` → 三個套件、**35 條全部通過**（心跳 27、`git_commit()` 4、`last_run.json` 4）。
+
+---
+
 ## 本次修改記錄（2026-09-26，第三段）— 本機 `/code-review` 十項發現全數修掉
 
 Codex CLI 不在這台（`which codex`、homebrew bin、npm global、`~/.local/bin` 全查過），

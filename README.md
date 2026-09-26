@@ -79,6 +79,7 @@
   - Log：`~/Library/Logs/jesusway/heartbeat.log`（腳本自己）+ `heartbeat_launchd.log`（launchd 層）；state：`heartbeat_state.json`
   - 驗告警管道：`HEARTBEAT_TEST_ALERT=true /opt/homebrew/bin/python3 ~/documents/website/heartbeat.py`（送不出去會以非 0 結束）
   - 判準的完整理由與 11 條驗收條件在 `CLAUDE.md`「自動更新心跳」節
+- **測試：** `bash tests/run_all.sh`（35 條）。不需要網路、`yt-dlp` 或 `gh`，不會發 Telegram，不碰真實 repo 的 git 狀態，三台電腦都能跑。細節見 `tests/README.md`
 - Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）
 - 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`（需 `GOOGLE_API_KEY`）
 - GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
