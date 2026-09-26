@@ -10,6 +10,32 @@
 
 ---
 
+## 本次修改記錄（2026-09-26，第五段）— RWD 三寬度實機驗證（家用機，09-26 待辦結案）
+
+驗的是 09-26 動到的 `youth.html` 與 `en/youth.html` 最新一列（樣青 2026.09.20），直接開線上正式站。
+
+**方法**：Playwright（MCP）`setViewportSize` 設精確 viewport，再以同源 iframe（`max-width:none`、寬度＝viewport）
+量測 `innerWidth`、`documentElement.scrollWidth`、最新列各 `<td>` 的 computed `display`、「Watch →」按鈕右緣。
+⚠️ 踩到一次：父頁 viewport 還是 390 時開 1280 的 iframe，iframe 會被夾成 390（量到 `innerWidth=390`），
+那組數據作廢；改成「先把 viewport 設成目標寬度，再開同寬 iframe」才正確。**看 `innerWidth` 是否等於目標值再採信。**
+
+| 頁面 | 寬度 | innerWidth | scrollWidth | 來賓欄 | Watch 右緣 | 導航 |
+|---|---|---|---|---|---|---|
+| en/youth | 390 | 390 | 390 | 隱藏 | 353 | 漢堡選單 |
+| youth | 390 | 390 | 390 | 隱藏 | 353 | `mobile-menu-button` |
+| en/youth | 768 | 768 | 768 | 顯示 | 723 | — |
+| youth | 768 | 768 | 768 | 顯示 | 723 | — |
+| en/youth | 1280 | 1280 | 1280 | 顯示 | 1227 | 桌面選單 |
+| youth | 1280 | 1280 | 1280 | 顯示 | 1211 | 桌面選單 |
+
+- 六組皆無水平捲動（scrollWidth＝viewport），按鈕都在畫面內；`hidden md:table-cell` 行為符合預期。
+- 390px 英文長標題 *You're Not Useless — You're Just Stuck: Let VSAI Be Where You're Caught* 換成六行、
+  列高 153px，截圖目視版面正常，未撐破表格。
+- Console 只有既有的 Tailwind CDN 生產環境警告與 YouTube 內嵌 `compute-pressure` 權限政策訊息，與本次無關。
+- 未涵蓋：只驗了 youth 兩頁（待辦指定範圍），其他頁未重驗；沒在實體手機上看。
+
+---
+
 ## 本次修改記錄（2026-09-26，第四段）— 測試進版控（`tests/`，35 條，一個指令跑完）
 
 先前三段的測試都寫在 session 的暫存區，關掉就沒了：程式與判準進了版控、**證據沒有**。
