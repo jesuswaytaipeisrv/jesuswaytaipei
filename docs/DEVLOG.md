@@ -78,8 +78,9 @@ HEARTBEAT_TEST_ALERT=true /opt/homebrew/bin/python3 ~/documents/website/heartbea
 
 ### 真實 Telegram 管道（已補驗）
 `HEARTBEAT_TEST_ALERT=true` 實跑一次，Telegram 回 200、exit 0、log 記「Telegram 已送出」。
-⚠️ 200 只代表 API 受理，**訊息是否真的抵達仍需使用者在手機上確認**——這個專案 09-13 那次就
-更正過一次「以為告警沒被看到」的記載，送出與收到是兩件事。
+**使用者當場確認手機收到**，所以這條是端到端驗完的，不只是 API 回 200。
+（刻意分開記：200 只代表受理，送出與收到是兩件事——這個專案 09-13 那次就更正過一次
+「以為告警沒被看到」的記載。以後再驗這個管道，同樣要拿到使用者的確認才算通。）
 
 ### 首次正式運作的時序
 10-01（四）21:00 主 job 跑 → 寫 `last_run.json`（這會是 `rebase.autoStash` 的第一次實戰）；
