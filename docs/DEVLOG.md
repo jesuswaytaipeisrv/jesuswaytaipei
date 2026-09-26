@@ -10,6 +10,81 @@
 
 ---
 
+## 本次修改記錄（2026-09-26）— 09-24 排程的兩個尾巴收掉：.DS_Store 擋住 rebase、英文翻譯 503
+
+### 09-24（四）那次的實際結果：內容全對，卡在 push 前一步
+排程**準時觸發**（`21:00:05 === update_sunday.py 開始 ===`，`runs = 1`），
+兩支影片都抓到、四個頁面都寫入、commit `5a8d7b8` 也建了，但：
+
+```
+[INFO] git pull --rebase：併入遠端變更
+fatal: no rebase in progress
+[ERROR] 執行失敗
+RuntimeError: git pull --rebase 失敗，已 abort，需人工處理：
+  error: cannot pull with rebase: You have unstaged changes.
+```
+
+`last exit code = 1`，**push 沒做，網站到 09-26 為止都還是舊的**。
+這次 `notify_failure()` 的 Telegram **有正常發出**（與 09-17 的靜默失敗不同）。
+
+**阻斷點是 `.DS_Store`**：它被納入版控（`.DS_Store` 與 `assets/.DS_Store` 兩個），
+Finder 動過資料夾就會產生未暫存修改，而 `git pull --rebase` 遇到髒工作樹會整批拒絕。
+這個檔案在 09-24 上午的稽核中就看到是 ` M .DS_Store`，當時被判斷成「整潔問題、留給使用者決定」，
+**低估了它是自動 push 的實際阻斷點**。
+
+第二個問題：樣青英文翻譯那次 Gemini 回 `503 UNAVAILABLE（This model is currently experiencing high demand）`，
+腳本 fallback 成中文並留下 `[WARNING] 樣青英文版暫用中文，請 push 前手動確認`。
+
+### CI 補救層（09-25 五 09:00）也補不上
+run `36100831088` 紅燈，原因是老問題：YouTube 對 CI 共用 IP 限流，
+`RdE18JKoivM` 與 `fcmrvY8uMQc` 兩支都「標題、upload_date、描述皆無法解析」，
+於是判為「可能漏更新」→ 正確亮紅燈並發 Telegram。**這是設計行為，不是新 bug**；
+CI 端至今仍沒有真正寫入過內容（`git push` 路徑依舊未驗）。
+
+### 本次做了什麼
+| # | 動作 | commit |
+|---|---|---|
+| 1 | `.DS_Store` 丟棄未暫存修改、兩個檔案 `git rm --cached` 移出版控、`.gitignore` 加 `.DS_Store` | `af1c5e3` |
+| 2 | `en/youth.html` 人工補上英文題目與來賓（取代 fallback 的中文） | `af1c5e3` |
+| 3 | `git_commit()` 的 `pull --rebase` 加 `-c rebase.autoStash=true`；`rebase --abort` 改為只在 `rebase_in_progress()` 為真時才呼叫 | `9c3edf8` |
+
+英文補譯內容：
+- 題目 *You’re Not Useless — You’re Just Stuck: Let VSAI Be Where You’re Caught*
+- 來賓 *Thinking Mentor, Boya College, Tunghai University, Hsu Heng-chia*
+
+### 測試
+**`git_commit()` 用臨時 git repo 跑三個情境（bare remote + local/other 兩個 clone，未動真實 repo）**，
+測試腳本放在 session 暫存區，未進 repo。`WEBSITE_DIR` 環境變數可覆寫，所以能直接對臨時 repo 呼叫函式本體：
+
+| 情境 | 期望 | 結果 |
+|---|---|---|
+| 髒工作樹（已追蹤檔案有未提交修改）＋遠端被別台推過 | autoStash 生效、push 成功、雜項原樣還原、別台 commit 併入 | ✅ 三項都成立 |
+| 同一行真衝突 | 拋 `RuntimeError`、abort 生效、repo 不卡在 rebase 中 | ✅ |
+| 遠端不存在（rebase 未開始就失敗） | 錯誤訊息不含誤導的 `no rebase in progress`，且不嘗試 abort | ✅ |
+
+**內容驗證**
+- 四頁表格各 10 列（`MAX_ROWS` 滾動正常），最新列：`sunday.html`／`en/sunday.html` = 2026.09.13，`youth.html`／`en/youth.html` = 2026.09.20
+- 兩支影片 ID 各只出現在對應的兩頁，各 1 次
+- Pages 部署兩次都綠燈（`36211624780`、`36211711137`）
+- **線上四頁實查**（部署後）：
+  - `sunday.html` 最新 2026.09.13「人生本該精彩 就看你行不行？」吳必然 牧師
+  - `en/sunday.html` 最新 2026.09.13 *Life Is Meant to Be Amazing: Will You Make It Happen?* / Pastor Pijan Wu
+  - `youth.html` 最新 2026.09.20「不是你太廢，是狀態卡住了！」許恆嘉
+  - `en/youth.html` 最新 2026.09.20 *You’re Not Useless — You’re Just Stuck…* / Hsu Heng-chia
+
+### ⚠️ 沒驗到的部分
+**RWD 三寬度（390／768／1280）沒有用實際瀏覽器驗**——Claude 的 Chrome 擴充當下未連線。
+替代檢查：新增列的 `<tr>`／`<td>` class 與既有列**逐欄完全一致**（來賓欄同樣是 `hidden md:table-cell`），
+表格結構與 CSS 皆未變動，唯一變數是英文標題字串較長（只影響該格換行行數，不影響版面結構）。
+要補驗的話，把擴充連上後看 `youth.html` 與 `en/youth.html` 這兩頁即可。
+
+### 仍未處理
+- 本機層心跳（09-17 段提的「週四 21:30 檢查當天有沒有 log」）**仍未施作**。這次證明了「準時觸發」不是唯一風險，
+  「跑完卻沒 push」也會發生，心跳若只檢查 log 有沒有新段落，這次會誤判為正常——真要做得檢查 `git status -sb` 的 ahead。
+- CI 端 `git push` 路徑仍未實際跑過。
+
+---
+
 ## 本次修改記錄（2026-09-24）— 全機排程稽核：09-17 失敗歸因、站上目前缺兩支（純文件，未改程式）
 
 ### 背景
