@@ -174,7 +174,21 @@ def read_last_run(now):
 def check_content(run):
     """比對候選與站上內容。回傳問題清單（空＝都對）。"""
     problems = []
-    for label, cand in (run.get("candidates") or {}).items():
+    cands = run.get("candidates") or {}
+
+    # 主 job 抓不到頻道清單時**不會 raise**：它寫 failure_reason、發告警，然後一路走到
+    # 「無更新，結束」正常收場，exit 是 0（09-17 那晚 log 的結尾字面上就是這句）。
+    # 所以只靠 exit≠0 判斷本機層失敗會整週靜音——而 09-17 那次 notify_failure() 自己也
+    # 因為沒網路發不出去，兩層都不出聲，正是這個心跳要擋的情況。
+    if run.get("failure_reason"):
+        problems.append(f"【抓不到頻道清單】本機排程那次回報：{run['failure_reason']}"
+                        f"——無法確認站上是不是最新。該次是以 exit 0 正常收場，"
+                        f"所以光看 exit code 看不出問題。")
+    elif not cands:
+        problems.append("【候選為空】本機排程那次沒有記下任何候選影片，"
+                        "無法確認站上是不是最新。")
+
+    for label, cand in cands.items():
         want = cand.get("date")
         pages = PAGES.get(label)
         if not want or not pages:
