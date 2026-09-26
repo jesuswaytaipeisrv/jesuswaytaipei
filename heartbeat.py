@@ -257,7 +257,10 @@ def main():
         text = (f"⚠️ 網站更新心跳（週四批次事後複查）發現問題：\n\n{body}\n\n"
                 f"本機 log：{Path.home() / 'Library' / 'Logs' / 'jesusway' / 'update_sunday_launchd.log'}")
         sent = send(text)
-        state["last_notified"] = now.isoformat(timespec="seconds")
+        # 只有真的送出去才記時間戳。送失敗卻記上去，會讓「管道壞了」被後面的
+        # 沉默上限判斷當成「剛通知過」，於是繼續安靜——正是這個心跳不允許的失效模式。
+        if sent:
+            state["last_notified"] = now.isoformat(timespec="seconds")
         save_state(state)
         logging.error(f"心跳判定異常 {len(problems)} 項，Telegram {'已送出' if sent else '送不出去'}")
         for p in problems:
@@ -267,10 +270,10 @@ def main():
     # 網站結果是對的，但本機層自己失敗過——CI 補救層或人工補上了。
     # 結果對就靜音會重演「綠燈說謊」：主層悄悄壞掉，整條鏈路退化成只剩 CI 在撐。
     if run.get("exit") not in (0, None):
-        send(f"🫀 網站更新心跳：網站內容正確，但本機排程那次是失敗收場"
-             f"（exit={run.get('exit')}、failure_reason={run.get('failure_reason')}）。"
-             f"應是 CI 補救層或人工補上的。本機層連續失敗會讓整條鏈路只剩 CI 在撐，值得看一下 log。")
-        state["last_notified"] = now.isoformat(timespec="seconds")
+        if send(f"🫀 網站更新心跳：網站內容正確，但本機排程那次是失敗收場"
+                f"（exit={run.get('exit')}、failure_reason={run.get('failure_reason')}）。"
+                f"應是 CI 補救層或人工補上的。本機層連續失敗會讓整條鏈路只剩 CI 在撐，值得看一下 log。"):
+            state["last_notified"] = now.isoformat(timespec="seconds")
         save_state(state)
         logging.warning("網站內容正確，但本機層那次失敗，已發低調通知")
         return
@@ -287,10 +290,13 @@ def main():
     if quiet_since is None or (now - quiet_since) >= timedelta(weeks=SILENCE_WEEKS):
         cands = run.get("candidates") or {}
         summary = "、".join(f"{label} {c.get('date')}" for label, c in cands.items()) or "（無候選）"
-        send(f"🫀 網站更新心跳：存活訊號。過去 {SILENCE_WEEKS} 週的週四批次都正常，"
-             f"本週最新內容 {summary}。收到這則代表心跳本身還活著。")
-        state["last_notified"] = now.isoformat(timespec="seconds")
-        logging.info(f"連續 {SILENCE_WEEKS} 週無異常，已發存活訊號")
+        if send(f"🫀 網站更新心跳：存活訊號。過去 {SILENCE_WEEKS} 週的週四批次都正常，"
+                f"本週最新內容 {summary}。收到這則代表心跳本身還活著。"):
+            state["last_notified"] = now.isoformat(timespec="seconds")
+            logging.info(f"連續 {SILENCE_WEEKS} 週無異常，已發存活訊號")
+        else:
+            # 時間戳刻意不更新：下次執行會再試一次，而不是安靜四週。
+            logging.error("存活訊號送不出去，時間戳不更新，下次會重試")
     else:
         logging.info("本週一切正常，保持安靜")
     save_state(state)
