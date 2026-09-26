@@ -10,6 +10,51 @@
 
 ---
 
+## 本次修改記錄（2026-09-26，第三段）— 本機 `/code-review` 十項發現全數修掉
+
+Codex CLI 不在這台（`which codex`、homebrew bin、npm global、`~/.local/bin` 全查過），
+所以先用本機 `/code-review`（high，範圍 `0499fd0..0444ba5`）補一輪獨立審查——
+`heartbeat.py` 那三百多行原本只有我自己的測試把關。
+四頁 HTML 的新增列經審查無問題（class 逐欄一致、中英日期與 video_id 一致、`MAX_ROWS` 滾動正確），
+十項全在兩支 Python。**關鍵四項我逐一自己驗過才動手，不照單全收。**
+
+### 兩項 high
+| # | 問題 | 修法 |
+|---|---|---|
+| ① | **`git fetch` 跑在讀 `origin/main` 之後**：`git show origin/main:` 在 `check_content()`（先呼叫），唯一那次 fetch 在 `check_unpushed()`（後呼叫），所以讀的是上次 pull/push 留下的舊 ref。後果正好打掉「排在 CI 之後」的排程理由——CI 週五補上的 push 本機看不到，四頁全報【沒推上去】 | 抽出 `fetch_remote()` 放在所有比對之前，**且 fetch 失敗就停在那裡不往下比對**（拿舊 ref 比出來的結論是錯的，多報幾項只會誤導） |
+| ② | **CJK 偵測會誤報，而權威值 `en_fallback` 寫進 JSON 卻沒用**。`en/youth.html` 現有列本來就有中文姓名，而且是刻意的雙語格式：`王馥蓓｜Chief Sustainability Advisor, Dentsu Group`、`黃名仕｜Founder & CEO, Open AI Fab`。只要某週最新那支樣青的來賓是這種寫法就假警報；反向也會漏（標題與講員剛好全拉丁字母時，真 fallback 也偵測不到） | 改讀 `run["en_fallback"][label]`，CJK regex 整個移除。**判準本身也錯了**，`CLAUDE.md` 的驗收條件 4 一併改寫，並把「英文頁刻意保留中文姓名」寫成已知地雷 |
+
+### 三項 medium
+- **③ `git fetch` 回傳碼沒檢查** → 週五沒網路或 ssh key 失效時靜默降級成「拿舊 ref 算出 ahead 0、結論沒有未推的 commit」。併入 ① 的 `fetch_remote()` 一起修。
+- **④ 任何無關的未推 commit 都觸發 ⚠️** → 這 repo 三台輪流維護、`CLAUDE.md` 與 DEVLOG 常手動編輯，週五上午留著一個沒推的文件 commit 就會收到「09-24 重演」的錯誤訊息。改成先 `git diff --name-only origin/main..HEAD -- <那四頁>`，只有動到內容才算。
+- **⑤ 【抓不到頻道清單】標籤混了兩種失敗** → `failure_reason` 有兩個來源（真的取不到清單／抓到清單但日期解析失敗，後者是 CI 常態）。改成中性標籤【本機那次沒能確認最新內容】並引原文，不把排查導到錯的層。
+
+### 五項 low
+⑥ 存活訊號用 `>= timedelta(weeks=4)` 比 wall clock，差幾秒就跳一整週 → 改用日數比並留一天寬容；且首次執行原本會發「過去 4 週都正常」這種當下沒有依據的話 → 改成明說「這是第一次執行，沒有先前的紀錄可比」。
+⑦ 頂層 `except` 的 `send()` 在例外發生於 `load_env()` 之前時必定靜默 → `load_env()` 提到 `__main__` 的 try 最前面。
+⑧ `latest_thursday()` docstring 寫「週四＝2」，實際 Python `weekday()` 週四＝3，程式對、註解錯 → 修正（那是整個窗口判定的基準，照註解改會位移一天）。
+⑨ `RUN_STATE["en_fallback"]` 重複賦值（我兩次編輯各加一次，死碼）→ 刪掉後者。
+⑩ `TEST_ALERT` 送不出去走 `sys.exit(1)`，`SystemExit` 不是 `Exception` → 兩個 `write_last_run()` 都跳過，`last_run.json` 留舊內容，下週心跳只會報「本週沒跑」而看不出真正壞的是告警管道 → 補 `except SystemExit` 落盤後 `raise`。
+
+### 測試（全部重跑，共 31 條通過）
+**測試架構本身也改了**：原本把 `remote_page()` 整個換成假的，所以「fetch 必須先於讀 `origin/main`」永遠測不到——
+① 就藏在那個盲區裡。現在 **stub 降到 `git()` 這一層**，只有 HTTP 與 `send()` 還是假的，git 呼叫順序因此可觀察。
+- 判準驗收 **27 條**（原 15 條 + review 回歸 12 條），含：fetch 先於 show 的順序、fetch 失敗不往下比對、
+  **站上真實的雙語來賓格式不得誤報**、`en_fallback` 為 True 要指出補譯哪一頁、ahead 只動文件不誤報／動到四頁要報、
+  標籤中性、首次執行措辭、28 天差幾秒的寬容、docstring 與程式一致、純觀測（git 只用 fetch/status/show/diff）
+- `git_commit()` autoStash **3 條** + autoStash × 真衝突 **1 條**
+- **⑩ 端對端**：在 repo 複本上 `TEST_ALERT=true` 且 token 置空實跑，確認 `last_run.json` 寫出且 `exit: 1`
+- **真實環境冒煙兩次**（真 `git fetch`／`git show`／HTTP，token 置空不發訊）：
+  真 repo（尚無 `last_run.json`）→ ⚠️ 正確；複本（有狀態、內容全對）→ exit 0，首次執行訊息措辭正確
+
+### 我自己要認的
+① 與 ② 都是**測試結構性看不到的**：判準測試把 `remote_page` 換成假的，所以 fetch 順序永遠不會被驗；
+英文頁的假資料我寫的是純英文，所以撞不到站上真實的雙語姓名格式。端對端那次會過，
+是因為我在跑之前手動 `git fetch` 過。**盲區剛好落在「stub 與真實資料的差異」上**——
+這也是為什麼把 stub 降到 `git()` 層比多寫幾條測試更有價值。
+
+---
+
 ## 本次修改記錄（2026-09-26，第二段）— 新增週五心跳：事後複查「使用者有沒有真的看到新內容」
 
 ### 為什麼做

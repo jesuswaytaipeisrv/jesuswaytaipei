@@ -90,7 +90,7 @@
 | 當天沒有執行紀錄 | 09-10（launchd 沒觸發）、07-17（TCC spawn 失敗） |
 | 候選日期與 `origin/main` 四頁不一致 | 09-24（跑完沒 push） |
 | `origin/main` 對了但線上網站還是舊的 | Pages 間歇逾時失敗（已知現象，解法是 Re-run） |
-| 英文頁最新一列實際是中文 | Gemini 回 503 時腳本靜默 fallback（09-24 樣青那列） |
+| 主 job 記下的 `en_fallback` 為 True（**不是**「頁面上有沒有中文」） | Gemini 回 503 時腳本靜默 fallback（09-24 樣青那列） |
 | 抓不到頻道清單／候選為空（**該次 exit 仍是 0**） | 09-17（fetch 失敗時主 job 不 raise，寫完 `failure_reason` 就走到「無更新，結束」正常收場；那晚 `notify_failure()` 自己也沒網路發不出去，兩層都不出聲） |
 
 **訊號來源是 `logs/last_run.json`，不是 log 的中文字串。** 主 job 每次執行都寫這份機器可讀的
@@ -113,7 +113,7 @@
 1. 週四排程完全沒觸發時，使用者在週五上午收到一則 ⚠️，訊息明說「當天沒有任何執行紀錄」。
 2. 排程跑了但內容沒推上 `origin/main` 時，使用者收到 ⚠️，訊息指出候選日期與站上日期各是什麼。
 3. 內容已推上 `origin/main` 但線上網站還是舊的時候，使用者收到 ⚠️，且能從訊息分辨這是**部署層**而非更新層的問題。
-4. 線上英文頁最新一列實際是中文時，使用者收到 ⚠️ 並知道是哪一頁。
+4. 主 job 那次翻譯 fallback（`en_fallback` 為 True）時，使用者收到 ⚠️ 並知道要補譯哪一頁。**反面也要成立**：英文頁本來就有中文姓名的那幾列不得觸發告警（見下方地雷）。
 5. 頻道上本來就沒有新主日／樣青的那週（例如 09-20），使用者**收不到任何訊息**。
 6. **交付層**失敗（`exit≠0`／沒推出去，但候選完整）而網站結果正確時，使用者收到一則**非 ⚠️** 的低調通知，說明本機層失敗、CI 已補上。
 7. 一切正常時使用者收不到訊息；但連續 4 週沒收到任何訊息時，第 4 週會收到一則存活訊號。
@@ -152,6 +152,16 @@
 - **工作樹只要有任何未提交修改，`git pull --rebase` 會整批拒絕**（`cannot pull with rebase: You have unstaged changes`），於是「內容做完、commit 也建了，卻沒 push」。2026-09-24 就是被兩個納入版控的 `.DS_Store` 擋掉整週更新。已於 2026-09-26 把 `.DS_Store` 移出版控並加進 `.gitignore`，`git_commit()` 也改用 `-c rebase.autoStash=true`。**教訓：查排程成敗不能只看「有沒有跑」，要看 `git status -sb` 的 ahead。**（2026-09-26）
 - **Gemini 翻譯可能回 503（模型高負載）**，腳本會 fallback 成中文並留 `[WARNING] 樣青英文版暫用中文，請 push 前手動確認`。這種情況 commit 照建、push 照做，**不會觸發任何告警**——週四之後看到英文頁是中文就是踩到這個。（2026-09-26）
 - 本機電源設定：AC `sleep 0`（不睡）、電池 `sleep 1`，且 `pmset -g sched` **沒有任何排定喚醒**。週四 21:00 沒插電源的話，排程要等人喚醒才補跑，補跑當下網路常還沒接回來。這**不推翻** 07-17 的結論（那兩次都查證機器醒著），只解釋 09-17 這種「延遲觸發＋沒網路」的形態。（2026-09-24）
+
+- **`en/` 英文頁刻意保留中文姓名**，例如 `王馥蓓｜Chief Sustainability Advisor, Dentsu Group`、
+  `黃名仕｜Founder & CEO, Open AI Fab`（中文姓名｜英文職稱的雙語格式）。
+  所以**不能用「頁面上有沒有中文」判斷翻譯是不是失敗**——那會週週假警報，而假警報正是這個批次的歷史病根。
+  要判翻譯 fallback 一律讀 `logs/last_run.json` 的 `en_fallback`，那是主 job 自己記下的事實。（2026-09-26）
+- **讀 `origin/main` 之前一定要先 `git fetch`**，而且要檢查 fetch 的回傳碼。
+  remote-tracking ref 是上次 pull/push 留下的快照：CI 補救層從 GitHub 端推的內容，本機不 fetch 就完全看不到，
+  會把「CI 已經補上」誤判成「沒推上去」。fetch 失敗也不能默默往下比對（會拿舊 ref 算出 ahead 0）。（2026-09-26）
+- **「本機領先 origin/main」不等於「網站內容沒送出去」**：這 repo 三台輪流維護、`CLAUDE.md` 與 DEVLOG 常手動編輯，
+  把任何未推 commit 都當成問題會週週假警報。判準要限定在「ahead 的 commit 有動到那四頁 HTML」。（2026-09-26）
 
 **YouTube 抓取**
 - YouTube 對 GitHub Actions 共用 IP 限流是常態，**CI 抓不到日期不是程式 bug**（本機同一支影片 ID 測試正常）。（2026-07-02、2026-07-17）
@@ -207,7 +217,11 @@
      `~/.hermes/.env` token）。刻意分開的理由寫在 `heartbeat.send()` 的 docstring，
      但這是「安全邊界重複實作」，值得確認要不要收斂。
 
-  **已經測過的不必重跑**（結果都在 `@docs/DEVLOG.md` 2026-09-26 兩段）：`git_commit()` 三情境、
+  **本機 `/code-review`（high）已於 2026-09-26 跑過並修完十項**（2 high、3 medium、5 low，
+  詳見 `@docs/DEVLOG.md` 同日第三段）。那十項都是實作層，**Codex 不必重報**；
+  請專注在上面五個跨層問題。範圍已含修正後的 commit。
+
+  **已經測過的不必重跑**（結果都在 `@docs/DEVLOG.md` 2026-09-26 三段）：`git_commit()` 三情境、
   心跳判準 16 情境、主程式與心跳的真實資料端對端、launchd spawn、以及
   **autoStash 與真衝突同時發生**（git 會自己 `Applied autostash.`，無 stash 殘留、雜項保留、沒卡在 rebase）。
 - **CI 的 `git push` 路徑仍未實際跑過**（見 `@docs/DEVLOG.md` 2026-09-04「尚未驗證」）。
@@ -219,6 +233,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-09-26，第三段** — 本機 `/code-review`（high）十項發現全數修掉（2 high：`git fetch` 跑在讀 `origin/main` 之後、CJK 偵測誤報而權威值 `en_fallback` 沒用）；測試 stub 降到 `git()` 層，共 31 條通過
 - **2026-09-26，第二段** — 新增週五 10:07 心跳（`heartbeat.py` + 只裝龍蝦的 plist）：判準改以結果為準、訊號來源 `logs/last_run.json`、13 情境測試全通過；⚠️ 真實 Telegram 管道尚未實發
 - **2026-09-26** — 09-24 排程結果：準時觸發、內容全對，但被納入版控的 `.DS_Store` 擋掉 `pull --rebase` 導致沒 push；補英文翻譯（Gemini 503 fallback 成中文）、`.DS_Store` 移出版控、`git_commit()` 改用 `rebase.autoStash`
 - **2026-09-24** — 全機排程稽核：09-17 失敗歸因到 macOS 27.0 更新當晚的網路空窗（含告警靜默）、站上缺 `RdE18JKoivM`（09.13 主日）與 `fcmrvY8uMQc`（09.20 樣青）、⚠️ 09-13 留的 `upload_date` 日期疑慮已驗證解除

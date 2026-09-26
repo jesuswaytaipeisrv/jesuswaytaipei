@@ -46,7 +46,6 @@ PAGES = {
     "樣青": ("youth.html", "en/youth.html"),
 }
 
-CJK = re.compile(r"[㐀-䶿一-鿿豈-﫿]")
 DATE = re.compile(r"\d{4}\.\d{2}\.\d{2}")
 
 
@@ -126,6 +125,22 @@ def newest_date(html):
     return m.group(0) if m else None
 
 
+def fetch_remote():
+    """更新 remote-tracking ref。回傳問題清單（空＝成功）。
+
+    **必須在讀 origin/main 之前跑。** 讀到舊 ref 會把「CI 補救層已經推上去」看成
+    「沒推上去」，正好打掉「心跳排在 CI 之後」這個排程理由（2026-09-26 code review 發現）。
+    fetch 失敗也不能默默往下比對：那會拿舊 ref 算出 ahead 0、結論「沒有未推的 commit」，
+    而那正是要抓的失效。
+    """
+    r = git("fetch", "--quiet", "origin")
+    if r.returncode != 0:
+        detail = r.stderr.strip() or f"returncode {r.returncode}"
+        return [f"【連不上遠端】`git fetch` 失敗（{detail}），"
+                f"origin/main 可能是舊的，本週狀態無法確認——先看網路與 ssh key。"]
+    return []
+
+
 def remote_page(page):
     """origin/main 上該頁的內容。取不到回 None。"""
     r = git("show", f"origin/main:{page}")
@@ -144,7 +159,7 @@ def online_page(page):
 
 # ── 判準 ──────────────────────────────────────────────────────────────
 def latest_thursday(now):
-    """今天或今天之前最近的那個週四（週四＝2）。"""
+    """今天或今天之前最近的那個週四。Python 的 weekday() 週一＝0，所以週四＝3。"""
     return (now - timedelta(days=(now.weekday() - 3) % 7)).date()
 
 
@@ -181,9 +196,11 @@ def check_content(run):
     # 所以只靠 exit≠0 判斷本機層失敗會整週靜音——而 09-17 那次 notify_failure() 自己也
     # 因為沒網路發不出去，兩層都不出聲，正是這個心跳要擋的情況。
     if run.get("failure_reason"):
-        problems.append(f"【抓不到頻道清單】本機排程那次回報：{run['failure_reason']}"
-                        f"——無法確認站上是不是最新。該次是以 exit 0 正常收場，"
-                        f"所以光看 exit code 看不出問題。")
+        # 刻意不貼「抓不到頻道清單」這種具體標籤：failure_reason 有兩種來源——真的取不到清單，
+        # 以及「抓到清單、候選也有 ID，只是日期解析失敗」（CI 環境的常態）。貼錯會把排查導到錯的層。
+        problems.append(f"【本機那次沒能確認最新內容】排程回報：{run['failure_reason']}"
+                        f"——該次以 exit 0 正常收場，光看 exit code 看不出問題。"
+                        f"看上面原文判斷是取不到頻道清單，還是抓到了清單但日期解析失敗。")
     elif not cands:
         problems.append("【候選為空】本機排程那次沒有記下任何候選影片，"
                         "無法確認站上是不是最新。")
@@ -219,35 +236,47 @@ def check_content(run):
                                 f"這是 GitHub Pages 部署層的問題，Re-run 那次 deploy 即可。")
                 continue
 
-            # 第三層：英文頁那列是不是真的英文（Gemini 回 503 時腳本會靜默 fallback 成中文）
-            if page.startswith("en/"):
-                row = newest_row(live)
-                if row and CJK.search(row):
-                    problems.append(f"【英文頁是中文】線上 {page} 最新一列（{want}）含中文，"
-                                    f"應是翻譯當次失敗後 fallback 的結果，需人工補譯。")
+        # 英文欄位是不是真的英文。**權威值是主 job 自己記下的 en_fallback，不是「頁面上有沒有中文」**：
+        # 這個站的英文頁刻意保留中文姓名（例如「王馥蓓｜Chief Sustainability Advisor, Dentsu Group」），
+        # 拿 CJK 偵測會週週假警報——而假警報正是這個批次的歷史病根（2026-09-26 code review 發現）。
+        if (run.get("en_fallback") or {}).get(label):
+            problems.append(f"【英文頁暫用中文】{label} {want} 那次翻譯失敗（Gemini 通常回 503），"
+                            f"英文欄位目前是中文，需人工補譯：{pages[1]}")
     return problems
 
 
 def check_unpushed():
-    """本機有沒有沒推出去的 commit。這是 09-24 的直接症狀。"""
-    problems = []
-    git("fetch", "--quiet", "origin")
+    """本機有沒有「動到那四頁卻沒推出去」的 commit。這是 09-24 的直接症狀。
+
+    刻意不把任何未推 commit 都當成問題：這 repo 三台輪流維護、`CLAUDE.md` 與 `docs/DEVLOG.md`
+    常手動編輯，只要本機留著一個沒推的文件 commit 就發 ⚠️ 會變成週週假警報
+    （2026-09-26 code review 發現）。判準是「網站內容有沒有送出去」，不是「本機有沒有領先」。
+    """
     r = git("status", "-sb")
     if r.returncode != 0:
-        problems.append(f"git status 失敗，無法確認有沒有沒推出去的 commit：{r.stderr.strip()}")
-        return problems
+        return [f"git status 失敗，無法確認有沒有沒推出去的 commit：{r.stderr.strip()}"]
     first = r.stdout.splitlines()[0] if r.stdout else ""
     m = re.search(r"\[ahead (\d+)", first)
-    if m:
-        problems.append(f"【commit 沒推出去】本機比 origin/main 多 {m.group(1)} 個 commit（{first.strip()}）。"
-                        f"09-24 就是工作樹有未提交修改擋住 pull --rebase 造成的，先看 git status。")
-    return problems
+    if not m:
+        return []
+
+    pages = [page for pair in PAGES.values() for page in pair]
+    diff = git("diff", "--name-only", "origin/main..HEAD", "--", *pages)
+    if diff.returncode != 0:
+        return [f"本機比 origin/main 多 {m.group(1)} 個 commit，但 git diff 失敗、"
+                f"無法確認是否動到那四頁：{diff.stderr.strip()}"]
+    touched = [line for line in diff.stdout.splitlines() if line.strip()]
+    if not touched:
+        logging.info(f"本機領先 {m.group(1)} 個 commit，但都沒動到那四頁（{first.strip()}），不算問題")
+        return []
+    return [f"【commit 沒推出去】本機比 origin/main 多 {m.group(1)} 個 commit，"
+            f"其中動到了 {'、'.join(touched)}。09-24 就是工作樹有未提交修改擋住 "
+            f"pull --rebase 造成的，先看 git status。"]
 
 
 # ── 主流程 ────────────────────────────────────────────────────────────
 def main():
     setup_logging()
-    load_env()
     logging.info("=== heartbeat.py 開始 ===")
 
     # 告警管道自我檢查。心跳平時安靜，管道壞掉時無從得知它還通不通，
@@ -264,7 +293,14 @@ def main():
     state["last_run"] = now.isoformat(timespec="seconds")
 
     run, problem = read_last_run(now)
-    problems = [problem] if problem else check_content(run) + check_unpushed()
+    if problem:
+        problems = [problem]
+    else:
+        # 順序有意義：fetch 必須先於任何 origin/main 的讀取，且失敗就停在這裡——
+        # 拿舊 ref 比對出來的結論會是錯的，多報幾項只會誤導。
+        problems = fetch_remote()
+        if not problems:
+            problems = check_content(run) + check_unpushed()
 
     if problems:
         body = "\n\n".join(f"・{p}" for p in problems)
@@ -301,23 +337,38 @@ def main():
             quiet_since = datetime.fromisoformat(last_notified)
         except ValueError:
             quiet_since = None
-    if quiet_since is None or (now - quiet_since) >= timedelta(weeks=SILENCE_WEEKS):
-        cands = run.get("candidates") or {}
-        summary = "、".join(f"{label} {c.get('date')}" for label, c in cands.items()) or "（無候選）"
-        if send(f"🫀 網站更新心跳：存活訊號。過去 {SILENCE_WEEKS} 週的週四批次都正常，"
-                f"本週最新內容 {summary}。收到這則代表心跳本身還活著。"):
-            state["last_notified"] = now.isoformat(timespec="seconds")
-            logging.info(f"連續 {SILENCE_WEEKS} 週無異常，已發存活訊號")
-        else:
-            # 時間戳刻意不更新：下次執行會再試一次，而不是安靜四週。
-            logging.error("存活訊號送不出去，時間戳不更新，下次會重試")
-    else:
+
+    cands = run.get("candidates") or {}
+    summary = "、".join(f"{label} {c.get('date')}" for label, c in cands.items()) or "（無候選）"
+    text = None
+    if quiet_since is None:
+        # 第一次執行（或 state 被清掉）。**不能說「過去 4 週都正常」**——當下沒有那 4 週的資料。
+        text = (f"🫀 網站更新心跳：這是第一次執行，沒有先前的紀錄可比，本週的檢查全部通過。"
+                f"本週最新內容 {summary}。之後只有異常才會出聲，"
+                f"連續 {SILENCE_WEEKS} 週安靜就會再發一則存活訊號。")
+    elif (now.date() - quiet_since.date()).days >= SILENCE_WEEKS * 7 - 1:
+        # 用日數比、並留一天寬容：兩端都是 launchd 實際觸發的 wall clock，
+        # 差幾秒就會讓 >= 28 天不成立而整整跳過一週。
+        text = (f"🫀 網站更新心跳：存活訊號。過去 {SILENCE_WEEKS} 週的週四批次都正常，"
+                f"本週最新內容 {summary}。收到這則代表心跳本身還活著。")
+
+    if text is None:
         logging.info("本週一切正常，保持安靜")
+    elif send(text):
+        state["last_notified"] = now.isoformat(timespec="seconds")
+        logging.info("已發存活／首次執行訊號")
+    else:
+        # 時間戳刻意不更新：下次執行會再試一次，而不是安靜四週。
+        logging.error("存活訊號送不出去，時間戳不更新，下次會重試")
     save_state(state)
 
 
 if __name__ == "__main__":
     try:
+        # load_env() 先跑：若例外發生在它之前，下面 except 裡的 send() 就沒有 token、
+        # 只能安靜地寫 log 然後結束——那正是這支腳本唯一不允許的失效模式
+        # （2026-09-26 code review 發現）。
+        load_env()
         main()
     except Exception as e:
         logging.exception("心跳本身執行失敗")

@@ -513,7 +513,6 @@ def main():
             if en_fallback:
                 title_en, speaker_en = title_zh, speaker_zh
                 logging.warning("主日英文版暫用中文標題，請 push 前手動確認")
-            RUN_STATE["en_fallback"]["主日"] = en_fallback
 
             updated_files += sync_video_row(
                 sunday_zh, sunday_en, video_id,
@@ -541,7 +540,6 @@ def main():
             if en_fallback:
                 title_en, guest_en = title_zh, guest_zh
                 logging.warning("樣青英文版暫用中文，請 push 前手動確認")
-            RUN_STATE["en_fallback"]["樣青"] = en_fallback
 
             updated_files += sync_video_row(
                 youth_zh, youth_en, video_id,
@@ -565,6 +563,12 @@ if __name__ == "__main__":
     try:
         main()
         write_last_run(0)
+    except SystemExit as e:
+        # sys.exit() 丟的是 SystemExit，不是 Exception，所以會繞過下面那個 except。
+        # 不落盤的話（TEST_ALERT 送不出去那條路徑就是 sys.exit(1)），心跳下週會讀到上次的狀態、
+        # 只報「本週的排程沒有跑」，看不出真正壞掉的是告警管道（2026-09-26 code review 發現）。
+        write_last_run(e.code if isinstance(e.code, int) else 1)
+        raise
     except Exception as e:
         logging.exception("執行失敗")
         # 先落盤再發告警：notify_failure() 本身在沒網路時也會失敗（09-17 實例），
