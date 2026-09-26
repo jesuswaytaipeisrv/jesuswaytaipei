@@ -177,9 +177,24 @@
 - ~~**09-17（四）跑完檢查 `RdE18JKoivM` 的日期**~~ **已驗證，本條結案（2026-09-24）**：實測 `upload_date` 已變成 **20260913**，與 `release_date` 相同——預排直播開播後 YouTube 會把 upload_date 改成實際開播日。現有 upload 優先的邏輯不會寫錯，`fetch_date()` 維持原樣。
 - ~~**2026-09-24（四）21:00 這次要驗**~~ **已驗並收尾（2026-09-26）**：排程準時觸發、兩支都寫入四頁，但因 `.DS_Store` 擋住 `pull --rebase` 而沒 push；09-26 已補英文翻譯、移除 `.DS_Store`、修 `git_commit()` 改用 autoStash，內容已上線（線上四頁實查過）。詳見 `@docs/DEVLOG.md` 2026-09-26 段。
 - **RWD 三寬度（390／768／1280）尚未用實際瀏覽器驗**：09-26 改了 `en/youth.html` 一列文字，當時 Chrome 擴充未連線。已比對新增列的 class 與既有列逐欄一致、結構未變，但仍缺實機驗證；擴充連上後看 `youth.html` 與 `en/youth.html` 即可補掉。
-- **Codex 複審 `e411787..05f1d65` 尚未跑**（2026-09-04 全部改動）。使用者指定在有 Codex CLI 的那台跑，
-  這台沒裝。Claude 這輪 `/code-review` 審的是實作層，Codex 值得看架構層：本機 launchd 與 CI 兩層
-  同一週都失敗時如何收斂、`MAX_ROWS=10` 的滾動刪除與 `sync_video_row()` 補寫半完成狀態會不會互相打架。
+- **Codex 架構層複審尚未跑，範圍已擴大為 `e411787..d30cc5e`**（原本只有 09-04 那批 `e411787..05f1d65`，
+  2026-09-26 加入 autoStash 修正與整套心跳）。使用者指定在有 Codex CLI 的那台跑，這台沒裝。
+  動到程式的只有三個檔：`update_sunday.py`、`heartbeat.py`、`.github/workflows/update_sunday.yml`。
+  Claude 這邊審的是實作層並附了測試，Codex 值得看的是跨層行為：
+  1. **三層同一週都失敗時如何收斂**。現在有本機週四 21:00、CI 週五 09:00、心跳週五 10:07 三層。
+     心跳只比對「最新一列」，若 CI 在 10:07 前後正在補寫（例如有人手動 re-run），心跳可能讀到半完成狀態。
+  2. **`MAX_ROWS=10` 的滾動刪除 × `sync_video_row()` 補寫半完成狀態**會不會互相打架（原本那題，仍未審）。
+  3. **心跳只看最新一列的盲區**：若某週同時漏兩支、或連漏兩週，滾動刪除會不會讓漏掉的那支永遠落在比對範圍外。
+  4. **`last_run.json` 是本機狀態且不進版控**：本機那週完全沒跑時，心跳讀到的是上週的 JSON，
+     會報「本週沒跑」⚠️ 即使 CI 已補上內容。這是刻意 fail loud（判準寫在「自動更新心跳」節），
+     但值得從架構層判斷該不該區分「本機沒跑但結果正確」與「兩層都沒成功」。
+  5. **兩支腳本各自實作 Telegram 發訊**（`notify_failure()` 與 `heartbeat.send()`，共用同一組
+     `~/.hermes/.env` token）。刻意分開的理由寫在 `heartbeat.send()` 的 docstring，
+     但這是「安全邊界重複實作」，值得確認要不要收斂。
+
+  **已經測過的不必重跑**（結果都在 `@docs/DEVLOG.md` 2026-09-26 兩段）：`git_commit()` 三情境、
+  心跳判準 16 情境、主程式與心跳的真實資料端對端、launchd spawn、以及
+  **autoStash 與真衝突同時發生**（git 會自己 `Applied autostash.`，無 stash 殘留、雜項保留、沒卡在 rebase）。
 - **CI 的 `git push` 路徑仍未實際跑過**（見 `@docs/DEVLOG.md` 2026-09-04「尚未驗證」）。
   下次真的輪到補救層寫入時，第一個要看這裡。
 
