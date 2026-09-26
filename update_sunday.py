@@ -392,6 +392,17 @@ def update_table(html_path, new_row):
     return True
 
 # ── Git Commit ────────────────────────────────────────────────────────
+def rebase_in_progress():
+    """rebase 是否卡在半途。git 用 .git/rebase-merge 或 .git/rebase-apply 目錄記錄這個狀態。"""
+    git_dir = subprocess.run(["git", "-C", str(WEBSITE_DIR), "rev-parse", "--git-dir"],
+                             capture_output=True, text=True).stdout.strip()
+    if not git_dir:
+        return False
+    base = Path(git_dir)
+    if not base.is_absolute():
+        base = WEBSITE_DIR / base
+    return (base / "rebase-merge").exists() or (base / "rebase-apply").exists()
+
 def git_commit(updated_files, commit_msg):
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "add"] + updated_files, check=True)
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "commit", "-m", commit_msg], check=True)
@@ -400,12 +411,19 @@ def git_commit(updated_files, commit_msg):
     # push 前先併入遠端。多台電腦共用此 repo，遠端若被別台推過，直接 push 必被拒
     # （2026-08-06 事故：本機更新做完卻推不上去，網站整週沒更新且無人察覺）。
     logging.info("git pull --rebase：併入遠端變更")
-    rebase = subprocess.run(["git", "-C", str(WEBSITE_DIR), "pull", "--rebase"],
-                            capture_output=True, text=True)
+    # autoStash：工作樹只要有任何未提交的雜項，rebase 會整個拒絕執行。2026-09-24 就是被一個
+    # 已納入版控的 .DS_Store 擋掉（cannot pull with rebase: You have unstaged changes），
+    # 內容與 commit 都好了卻沒推出去。雜項先暫存、rebase 完再還原，不影響本次要推的檔案。
+    rebase = subprocess.run(["git", "-C", str(WEBSITE_DIR), "-c", "rebase.autoStash=true",
+                             "pull", "--rebase"], capture_output=True, text=True)
     if rebase.returncode != 0:
-        # 衝突時務必還原乾淨，否則 repo 卡在 rebase 中，下週排程一樣爆
-        subprocess.run(["git", "-C", str(WEBSITE_DIR), "rebase", "--abort"], check=False)
-        raise RuntimeError(f"git pull --rebase 失敗，已 abort，需人工處理：{rebase.stderr.strip()}")
+        # 只有真的卡在半途才 abort，否則 repo 會留在 rebase 中，下週排程一樣爆。
+        # 無條件 abort 會在「根本沒開始 rebase」時吐出 fatal: no rebase in progress，
+        # 讓 log 看起來像是 abort 也失敗了（2026-09-24 實例）。
+        if rebase_in_progress():
+            subprocess.run(["git", "-C", str(WEBSITE_DIR), "rebase", "--abort"], check=False)
+            logging.info("rebase 已 abort，工作樹還原乾淨")
+        raise RuntimeError(f"git pull --rebase 失敗，需人工處理：{rebase.stderr.strip()}")
 
     subprocess.run(["git", "-C", str(WEBSITE_DIR), "push"], check=True)
     logging.info("git push 完成")
