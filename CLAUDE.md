@@ -190,10 +190,21 @@
 - 自動化 push 用的 SSH deploy key 只在實際跑排程那台；其他機器用 HTTPS + Keychain PAT push，兩者並存正常。
 - 家用機**沒裝 `yt-dlp`、也沒有 `gh` CLI**，查排程走 REST API（指令見 `@docs/DEVLOG.md` 2026-08-22 段）。
 
+**Cloudflare Security Insights 報告（2026-09-28 判讀，下次收到同樣內容不必重查）**
+- **Dangling A Record ×3 ＝ 誤報**：`185.199.108–111.153` 是 GitHub Pages 官方 IP（GitHub 用 Fastly 當 CDN），根網域實測 301 → `www`、服務正常。
+  真正要防的「網域被別人在 GitHub 認領」要靠 **GitHub 網域驗證**（見待辦），不是刪 DNS 記錄——**刪了網站就掛了**。
+- **Unproxied A ×3／CNAME ×1 ＝ 刻意設定，不可照建議改橘雲**：見 `DOMAIN_SETUP.md` 灰雲規定，GitHub Pages 要自己簽 Let's Encrypt。
+  所謂「來源 IP 外露」是 GitHub 公開 IP，沒東西可藏。
+- **HSTS／Bot Fight Mode／AI Labyrinth／Security.txt ＝ 可忽略**：前三者都只在橘雲生效，灰雲下開了也無作用；
+  `www` 已由 GitHub 送 HSTS（實測 `max-age=31556952`）；靜態站無漏洞通報需求。
+- 當時憑證實測：Let's Encrypt，2026-08-16 簽、**11-14 到期**，GitHub 自動續簽正常（記憶中「9/15 到期」那張已被取代）。
+- 同報告的 **Cloudflare 帳號未開 MFA 是真問題**（帳號同時管本站網域、isdsdesk.com、兩個 R2 備份 bucket），屬帳號層級，已請使用者開啟。
+
 ---
 
 ## 待辦（跨機器）
 
+- **（選做，不急）GitHub 網域驗證**：GitHub 頭像 → Settings → Pages → Add a domain → `jesuswaytaipei.org`，照指示在 Cloudflare 加 `_github-pages-challenge-jesuswaytaipeisrv` TXT（灰雲）→ Verify。防止 repo 自訂網域設定被拿掉時他人認領本網域（2026-09-28 Security Insights 判讀的衍生待辦）。
 - ~~查 09-10（四）本機 launchd 為何沒推 09-06 主日~~ **已在龍蝦查過（2026-09-17）**：兩份 log 09-10 都**一行沒有**，launchd 根本沒觸發；
   機器當時醒著、設定正確、21:19 人工重開機；unified log 已輪替，觸發為何被跳過查不到。詳見 `@docs/DEVLOG.md` 2026-09-17 段。
   ~~**09-17（四）21:00 跑完要看 `update_sunday_launchd.log` 有沒有新段落**~~ **已看（2026-09-24）**：有新段落，但**遲到 21:43 才觸發**且一開跑就 DNS 失敗——當晚 22:24 裝了 macOS 27.0。所以 09-17 不是「沒觸發」，是「在系統更新空窗期觸發並失敗」。本機層心跳**仍未施作**，要不要做等今晚（09-24）這次的結果再定。
