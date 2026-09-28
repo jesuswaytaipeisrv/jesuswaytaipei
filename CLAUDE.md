@@ -198,7 +198,7 @@
 - **HSTS／Bot Fight Mode／AI Labyrinth／Security.txt ＝ 可忽略**：前三者都只在橘雲生效，灰雲下開了也無作用；
   `www` 已由 GitHub 送 HSTS（實測 `max-age=31556952`）；靜態站無漏洞通報需求。
 - 當時憑證實測：Let's Encrypt，2026-08-16 簽、**11-14 到期**，GitHub 自動續簽正常（記憶中「9/15 到期」那張已被取代）。
-- 同報告的 **Cloudflare 帳號未開 MFA 是真問題**（帳號同時管本站網域、isdsdesk.com、兩個 R2 備份 bucket），屬帳號層級，已請使用者開啟。
+- 同報告的 **Cloudflare 帳號未開 MFA 是真問題**（帳號同時管本站網域、isdsdesk.com、兩個 R2 備份 bucket），屬帳號層級。**2026-09-28 已處理**：使用者另設 Cloudflare 帳號密碼（原本只用 Google SSO、從沒設過），MFA 改用**驗證器 App**、郵件驗證已停用（郵件與 SSO 同一個 Gmail，當第二因素等於沒有）。
 
 ---
 
