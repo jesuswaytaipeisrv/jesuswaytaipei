@@ -1,12 +1,12 @@
 # tests — 週四批次與心跳的回歸測試
 
 ```bash
-bash tests/run_all.sh          # 全部（35 條，約 10 秒）
+bash tests/run_all.sh          # 全部（36 條，約 10 秒）
 python3 tests/test_heartbeat.py   # 單跑一支
 ```
 
 **任何一台電腦都能跑**：不需要網路、不需要 `yt-dlp`、不需要 `gh`、不會發任何 Telegram、
-不碰真實 repo 的 git 狀態（每個情境用 `tempfile` 建獨立的臨時 git repo）。
+不碰真實 repo 的 git 狀態（每個情境用 `tempfile` 建獨立的臨時 git repo），**也不會寫進正式的 `~/Library/Logs/jesusway/heartbeat.log`**（守門條 G 釘住這件事；2026-09-30 之前踩過一次，留下 596 行看起來像真警報的紀錄）。
 路徑由測試檔自身推導（`Path(__file__).resolve().parents[1]`）——三台電腦的 repo 路徑各不相同，
 寫死 `Path.home()` 在別台會 import 失敗。
 
@@ -15,7 +15,7 @@ Telegram 一律安全：token 在測試中置空，而 `load_env()` 用 `setdefa
 
 | 檔案 | 條數 | 涵蓋 |
 |---|---|---|
-| `test_heartbeat.py` | 27 | `CLAUDE.md`「自動更新心跳」節的 12 條驗收條件，加上 2026-09-26 code review 十項修正的回歸 |
+| `test_heartbeat.py` | 28 | `CLAUDE.md`「自動更新心跳」節的 12 條驗收條件，加上 2026-09-26 code review 十項修正的回歸 |
 | `test_git_commit.py` | 4 | `git_commit()` 的 `rebase.autoStash`、只在真的卡住時才 abort、autoStash × 真衝突不留 stash |
 | `test_last_run_state.py` | 4 | 心跳的訊號來源 `logs/last_run.json`：欄位齊全、`SystemExit` 路徑也落盤、舊內容會被覆蓋 |
 

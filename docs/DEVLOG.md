@@ -10,6 +10,43 @@
 
 ---
 
+## 本次修改記錄（2026-09-30）— 測試會污染正式 log：修掉並清除 596 行假紀錄
+
+使用者問「本件還有待完成事項嗎」，查現況時發現的（不是回報來的）。
+
+### 問題
+`~/Library/Logs/jesusway/heartbeat.log` 裡有這種東西：
+```
+[ERROR] 心跳判定異常 1 項，Telegram 已送出
+[ERROR]   ・【commit 沒推出去】本機比 origin/main 多 2 個 commit，其中動到了 sunday.html、en/sunday.html。
+```
+**那不是真的告警，是測試寫進去的。** `tests/test_heartbeat.py` 只覆寫了 `LAST_RUN_FILE` 與 `STATE_FILE`，
+`setup_logging()` 照樣寫進正式 log；而「Telegram 已送出」是假的——測試的 `send` stub 回 True。
+
+心跳的全部價值就是讓那份 log 可信，結果我讓測試在裡面留下**看起來像真警報、還聲稱已送出**的紀錄。
+這是 07-30～09-04 六次假警報的翻版，只是搬進了 log 裡。
+
+### 清理範圍（先精確辨識才動手）
+- 全檔 **596 行，時間戳全部是 2026-09-26**（`grep -oE "^2026-[0-9]{2}-[0-9]{2}" | sort -u` 只有一個日期）
+- `launchctl print` 顯示心跳 **`runs = 0`、`last exit code = (never exited)`**——從未由排程執行過
+- 大批次（38／43／52／54／68 行）是測試套件；小批次（3～8 行）是手動冒煙與 launchd spawn 驗證
+- 結論：**這個檔案裡零生產內容**，整檔刪除。唯一有意義的一行（10:59 真的送出 Telegram 那次）
+  已記在本檔 09-26 第二段與 `CLAUDE.md` 驗收條件 10，不會因刪除而失去
+
+### 修法
+`tests/test_heartbeat.py` 在 import 之後、**第一次呼叫 `main()` 之前**把 `LOG_DIR`／`LOG_FILE`／`STATE_FILE`
+都指到 `tempfile` 目錄——時機是關鍵，`logging.basicConfig` 只有第一次會真的安裝 handler。
+生產程式（`heartbeat.py`）一行沒改，常數仍指向 `~/Library/Logs/jesusway/`。
+
+新增守門條 **G**：在 import 時記下正式 log 的存在與大小，套件跑完斷言完全沒變。
+以後若有人又把 stub 放漏，這條會擋下來。測試 35 → **36 條**（心跳 28、`git_commit()` 4、`last_run.json` 4）。
+
+### 驗證
+刪檔後重跑 `bash tests/run_all.sh`：36 條全過、守門條 G 通過、**正式 log 沒有被重建**。
+`git status` 確認這次只動到 `tests/test_heartbeat.py`。10-02 心跳第一次正式執行時，log 會是乾淨的。
+
+---
+
 ## 本次修改記錄（2026-09-26，第五段）— RWD 三寬度實機驗證（家用機，09-26 待辦結案）
 
 驗的是 09-26 動到的 `youth.html` 與 `en/youth.html` 最新一列（樣青 2026.09.20），直接開線上正式站。

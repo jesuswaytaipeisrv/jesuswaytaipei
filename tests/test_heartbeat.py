@@ -20,6 +20,19 @@ REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO))
 import heartbeat as hb  # noqa: E402
 
+# ── 隔離正式 log ────────────────────────────────────────────────────
+# 測試絕不能寫進 ~/Library/Logs/jesusway/heartbeat.log。2026-09-26 踩過：測試只覆寫了
+# LAST_RUN_FILE 與 STATE_FILE，setup_logging() 照樣寫進正式 log，留下 596 行看起來像真警報
+# 的紀錄（還寫著「Telegram 已送出」——那是 send stub 回 True）。心跳的價值就是那份 log 可信，
+# 污染它等於把假警報搬進 log 裡。**必須在第一次呼叫 main() 之前覆寫**：
+# logging.basicConfig 只有第一次會真的安裝 handler。
+PROD_LOG = hb.LOG_FILE
+_PROD_BEFORE = (PROD_LOG.exists(), PROD_LOG.stat().st_size if PROD_LOG.exists() else 0)
+_TMP_LOG_DIR = Path(tempfile.mkdtemp())
+hb.LOG_DIR = _TMP_LOG_DIR
+hb.LOG_FILE = _TMP_LOG_DIR / "heartbeat.log"
+hb.STATE_FILE = _TMP_LOG_DIR / "state.json"
+
 THU = "2026-09-24T21:00:05"
 NOW = datetime.fromisoformat("2026-09-26T10:07:00")
 ROW = '<tbody class="x">\n<tr class="hover"><td>{d}</td><td>{t}</td><td>{g}</td></tr>\n</tr>'
@@ -220,6 +233,12 @@ _, _, calls, _ = harness(GOOD_RUN, GOOD, GOOD, state=dict(RECENT), ahead=1, diff
 ok("11 純觀測（git 只用 fetch/status/show/diff）",
    not banned and {c[0] for c in calls} <= {"fetch", "status", "show", "diff"},
    f"可疑字串={banned or '無'} git={sorted({c[0] for c in calls})}")
+
+# ── 守門：跑完整套測試不得動到正式 log ─────────────────────────────
+_after = (PROD_LOG.exists(), PROD_LOG.stat().st_size if PROD_LOG.exists() else 0)
+ok("G 跑測試不會寫進正式 log（~/Library/Logs/.../heartbeat.log）",
+   _after == _PROD_BEFORE,
+   f"測試前={_PROD_BEFORE} 測試後={_after} → 正式 log 被動到了，setup_logging() 又寫出去了")
 
 print("\n===== 驗收 =====")
 allok = True
