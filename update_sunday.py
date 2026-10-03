@@ -22,6 +22,10 @@ LOG_FILE     = WEBSITE_DIR / "logs" / "update_sunday.log"
 LAST_RUN_FILE = WEBSITE_DIR / "logs" / "last_run.json"
 ENV_FILE     = Path.home() / ".hermes" / ".env"
 CHANNEL_URL  = "https://www.youtube.com/@JesuswayTaipei/streams"
+# yt-dlp 取日期的欄位順序：release_date（直播實際開播日）優先，upload_date 為後備。
+# 直播的重播檔處理完 YouTube 才更新 upload_date，可能比開播日晚兩天
+# （2026-10-01 `_o_9r6qJUPw` 09-27 主日被寫成 2026.09.29）。非直播影片沒有 release_date，自動退回 upload_date。
+DATE_FIELDS  = "%(release_date,upload_date)s"
 
 # ── Logging ───────────────────────────────────────────────────────────
 def setup_logging():
@@ -119,7 +123,7 @@ def notify_failure(subject, detail):
 def fetch_latest_streams(max_items=25):
     """
     一次 flat-playlist 取 ID + 標題，用關鍵字篩選後，
-    只對符合的影片做個別抓取（取 upload_date）。
+    只對符合的影片做個別抓取（取 release_date，無則 upload_date）。
     回傳：
       latest_sunday: (date_fmt, raw_title, video_id) 或 None
       latest_youth:  (date_fmt, raw_title, video_id) 或 None
@@ -169,13 +173,13 @@ def fetch_latest_streams(max_items=25):
         return m.group(1) if m else None
 
     def parse_date_from_description(desc):
-        """從影片描述解析「日期：2026/06/21」格式（標題與 upload_date 皆無日期時的最後備援）"""
+        """從影片描述解析「日期：2026/06/21」格式（標題與 yt-dlp 日期欄位皆無日期時的最後備援）"""
         m = re.search(r"日期[：:]\s*(\d{4})[/.](\d{2})[/.](\d{2})", desc or "")
         return f"{m.group(1)}.{m.group(2)}.{m.group(3)}" if m else None
 
     def fetch_date(vid):
-        """備用：標題無日期時，個別呼叫 yt-dlp 取 upload_date；
-        若 upload_date 也拿不到，改剖析影片描述欄裡的「日期：YYYY/MM/DD」。
+        """備用：標題無日期時，個別呼叫 yt-dlp 取日期（欄位順序見 DATE_FIELDS）；
+        若日期欄位也拿不到，改剖析影片描述欄裡的「日期：YYYY/MM/DD」。
         優先用 android client（CI 環境較不易被 YouTube 限流），失敗再試預設 client。
         """
         SEP = "\x1f"  # 分隔符，不會出現在描述文字中
@@ -184,7 +188,7 @@ def fetch_latest_streams(max_items=25):
             try:
                 r2 = subprocess.run(
                     ["yt-dlp", "--skip-download",
-                     "--print", f"%(upload_date,release_date)s{SEP}%(description)s"]
+                     "--print", f"{DATE_FIELDS}{SEP}%(description)s"]
                     + extra_args + [f"https://www.youtube.com/watch?v={vid}"],
                     capture_output=True, text=True, timeout=30
                 )
@@ -194,7 +198,7 @@ def fetch_latest_streams(max_items=25):
                     return f"{date_str[:4]}.{date_str[4:6]}.{date_str[6:8]}"
                 date_fmt = parse_date_from_description(desc)
                 if date_fmt:
-                    logging.info(f"upload_date 為空，改從影片描述取得日期：{vid} → {date_fmt}")
+                    logging.info(f"yt-dlp 日期欄位為空，改從影片描述取得日期：{vid} → {date_fmt}")
                     return date_fmt
             except subprocess.TimeoutExpired:
                 logging.error(f"yt-dlp 取得 {vid} 日期逾時（>30s）")
@@ -206,7 +210,7 @@ def fetch_latest_streams(max_items=25):
         logging.warning(f"android client 失敗，改用預設 client 重試：{vid}")
         date_fmt = _run([])
         if not date_fmt:
-            logging.error(f"無法取得 {vid} 的上傳日期（標題、upload_date、描述皆無法解析）")
+            logging.error(f"無法取得 {vid} 的上傳日期（標題、release_date／upload_date、描述皆無法解析）")
         return date_fmt
 
     def get_date(vid, title):

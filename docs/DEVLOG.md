@@ -10,6 +10,50 @@
 
 ---
 
+## 本次修改記錄（2026-10-03）— 10-01 排程成功上線，但主日日期寫成 09.29
+
+使用者問「週四晚上的排程有成功嗎」，家用機（無 `yt-dlp`／`gh`／launchd）從遠端查。
+
+### 排程結果（遠端能看到的部分）
+| 項目 | 結果 |
+|---|---|
+| 本機主 job | 10-01 21:00:16 commit `e194599`「自動更新 主日 2026.09.29「獨一無二的呼召」」並 push，中英兩頁都寫入（英文標題 *A Unique Calling*，非 fallback） |
+| 線上 | `sunday.html`／`en/sunday.html` 都有 `_o_9r6qJUPw` |
+| CI 補救層 | 10-02 run `36975435223` success；`Send email notification`／`Fail the run…` 兩步皆 skipped（判定站上已最新） |
+| 09-20 沒主日那列 | 正確：頻道上 09-20 是樣青 `fcmrvY8uMQc`，已在 `youth.html` |
+
+### 問題：日期寫成 2026.09.29（週二），實際是 09-27（日）
+watch page：`startTimestamp` 2026-09-27T05:34:52Z（台北 13:34）、`uploadDate` 2026-09-29T03:53:41-07:00。
+`fetch_date()` 用 `%(upload_date,release_date)s`，upload 優先 → 拿到重播檔處理完的日期。
+09-24 那次以 `RdE18JKoivM`（預排直播）驗過「upload_date 會被改成開播日」就結案，**那個結論只對預排直播成立**，一般直播這次就踩到了。
+
+### 修改
+- `sunday.html`、`en/sunday.html`：`2026.09.29` → `2026.09.27`
+- `update_sunday.py`：新增常數 `DATE_FIELDS = "%(release_date,upload_date)s"`，`fetch_date()` 改用它；相關 docstring／log 文字同步（已確認心跳與測試不依賴這些 log 字串）
+- 新增 `tests/test_date_fields.py`（2 條），列入 `tests/run_all.sh`
+
+### 測試
+- **真 yt-dlp 實測欄位順序**（暫存 venv，android client，測完已刪）：
+
+  | video | was_live | upload | release | 新順序 | 舊順序 |
+  |---|---|---|---|---|---|
+  | `_o_9r6qJUPw` | True | 20260929 | 20260927 | **20260927** | 20260929 |
+  | `RdE18JKoivM` | True | 20260913 | 20260913 | 20260913 | 20260913 |
+  | `WqxohQJV9ao` | True | 20260906 | 20260906 | 20260906 | 20260906 |
+  | `fcmrvY8uMQc` | True | 20260920 | 20260920 | 20260920 | 20260920 |
+  | `cj9TAOIjbgU` | True | 20260823 | 20260823 | 20260823 | 20260823 |
+
+  其餘四支結果不變，改順序不影響過去資料。
+- **端對端**：真 yt-dlp 跑修改後的 `fetch_latest_streams()` → 主日 `2026.09.27`、樣青 `2026.09.20`、`failure_reason=None`
+- **回歸測試**：`test_date_fields.py` 在新程式 2/2 通過；把 `update_sunday.py` 暫時 stash 回舊版，第 1 條失敗（got=2026.09.29），確認測試真的擋得住
+- `bash tests/run_all.sh`：38 條全部通過
+
+### 尚未驗證 / 已知限制
+- `release_date` 是 yt-dlp 由 `release_timestamp` 以 **UTC** 換算的日期。台北早上 08:00 前開播的直播會差一天；目前主日與樣青都在下午，不受影響
+- 龍蝦端的 launchd log、10-02 心跳首次正式執行（`heartbeat.log`／`heartbeat_state.json`／`last_run.json`）家用機看不到，仍待龍蝦覆核（CLAUDE.md 待辦）
+
+---
+
 ## 本次修改記錄（2026-09-30）— 測試會污染正式 log：修掉並清除 596 行假紀錄
 
 使用者問「本件還有待完成事項嗎」，查現況時發現的（不是回報來的）。

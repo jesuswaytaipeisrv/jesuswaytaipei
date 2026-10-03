@@ -1,7 +1,7 @@
 # tests — 週四批次與心跳的回歸測試
 
 ```bash
-bash tests/run_all.sh          # 全部（36 條，約 10 秒）
+bash tests/run_all.sh          # 全部（38 條，約 10 秒）
 python3 tests/test_heartbeat.py   # 單跑一支
 ```
 
@@ -17,6 +17,7 @@ Telegram 一律安全：token 在測試中置空，而 `load_env()` 用 `setdefa
 |---|---|---|
 | `test_heartbeat.py` | 28 | `CLAUDE.md`「自動更新心跳」節的 12 條驗收條件，加上 2026-09-26 code review 十項修正的回歸 |
 | `test_git_commit.py` | 4 | `git_commit()` 的 `rebase.autoStash`、只在真的卡住時才 abort、autoStash × 真衝突不留 stash |
+| `test_date_fields.py` | 2 | 標題無日期時的 yt-dlp 日期欄位順序：`release_date` 優先、非直播退回 `upload_date`（假 `yt-dlp` 放在 PATH，`fetch_latest_streams()` 走真實路徑） |
 | `test_last_run_state.py` | 4 | 心跳的訊號來源 `logs/last_run.json`：欄位齊全、`SystemExit` 路徑也落盤、舊內容會被覆蓋 |
 
 ## 為什麼 stub 只降到 `git()` 這一層

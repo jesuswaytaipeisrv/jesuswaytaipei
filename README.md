@@ -99,10 +99,11 @@ read -s GOOGLE_API_KEY && export GOOGLE_API_KEY && /opt/homebrew/bin/python3 ~/d
 在專案目錄 `import update_sunday`，呼叫 `parse_sunday_title_speaker()` → `build_row()` → `sync_video_row()`
 一次寫進中英文兩頁，再 commit push。實例見 `docs/DEVLOG.md` 2026-09-13。
 
-### 日期取得邏輯（2026-07-02 更新）
+### 日期取得邏輯（2026-07-02 更新；2026-10-03 改 release_date 優先）
 1. 優先從標題開頭 `YYYY.MM.DD` 格式 parse（無額外網路呼叫）——**注意：頻道已於 2026-06 全面拿掉標題日期前綴，這條路徑目前實務上幾乎不會命中**
-2. 標題無日期時，呼叫 yt-dlp 取 `upload_date`，優先用 `player_client=android`（CI 環境限流較少）
-3. `upload_date` 仍拿不到時，改剖析同一次呼叫帶回的描述欄，找「日期：YYYY/MM/DD」格式（2026-07-02 新增）
+2. 標題無日期時，呼叫 yt-dlp 取 `release_date`（直播實際開播日），沒有才退回 `upload_date`；優先用 `player_client=android`（CI 環境限流較少）。
+   不能 upload 優先：直播重播檔處理完 YouTube 才更新 upload_date，可能晚兩天（2026-10-03）
+3. 兩個日期欄位都拿不到時，改剖析同一次呼叫帶回的描述欄，找「日期：YYYY/MM/DD」格式（2026-07-02 新增）
 
 ---
 
