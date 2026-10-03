@@ -214,18 +214,9 @@
 - ~~**2026-09-24（四）21:00 這次要驗**~~ **已驗並收尾（2026-09-26）**：排程準時觸發、兩支都寫入四頁，但因 `.DS_Store` 擋住 `pull --rebase` 而沒 push；09-26 已補英文翻譯、移除 `.DS_Store`、修 `git_commit()` 改用 autoStash，內容已上線（線上四頁實查過）。詳見 `@docs/DEVLOG.md` 2026-09-26 段。
 - ~~**RWD 三寬度（390／768／1280）尚未實機驗**~~ **已在家用機驗完，本條結案（2026-09-26）**：`youth.html`／`en/youth.html`
   六組皆無水平捲動、Watch 按鈕在畫面內、來賓欄 390 隱藏／768 起顯示。詳見 `@docs/DEVLOG.md` 2026-09-26 第五段。
-- **待覆核：10-01（四）主 job 與 10-02（五）心跳的首次正式執行**（2026-10-03 家用機從遠端能看到的部分已核：
-  10-01 21:00:16 主 job 有 commit 並 push（`e194599`）、線上兩頁都有、週五 CI 綠燈且告警步驟 skipped；
-  但日期寫錯成 09.29，已修，見 DEVLOG 2026-10-03。**下面這些本機 log／心跳狀態檔仍要到龍蝦看**）（2026-09-30 記。原本排在 Claude session 裡的
-  一次性驗證只活在那個對話裡，所以把清單留在這裡，任何一台、任何時候都能接手）。
-  - 10-01 21:00 是 `rebase.autoStash` 的首次實戰：`~/Library/Logs/jesusway/update_sunday_launchd.log`
-    不該再出現 `cannot pull with rebase: You have unstaged changes`，也不該出現誤導的 `fatal: no rebase in progress`
-  - 10-02 10:07 是心跳的首次正式執行（安裝後第一次由 launchd 跑）：看 `launchctl print` 的 `runs`／`last exit code`、
-    `~/Library/Logs/jesusway/heartbeat_launchd.log`（注意 TCC／PATH 之類的 spawn 問題，07-17 踩過）、
-    `heartbeat.log` 與 `heartbeat_state.json`。**首次執行必定發一則「這是第一次執行」訊號，那是預期行為**
-  - **最重要：不要只採信心跳的判定，要獨立覆核。** 拿 `logs/last_run.json`、`git status -sb`、
-    線上四頁三方交叉比對；**不一致就是心跳判錯，那比排程失敗更值得處理**
-  - 英文頁是否真的英文，一律以 `last_run.json` 的 `en_fallback` 為準，不要用「頁面上有沒有中文」判斷（見已知地雷）
+- ~~**待覆核：10-01（四）主 job 與 10-02（五）心跳的首次正式執行**~~ **已在龍蝦覆核，本條結案（2026-10-03）**：
+  10-01 log 無 `cannot pull with rebase`／`no rebase in progress`（autoStash 有效）；心跳 `runs = 1`、`last exit code = 0`、
+  首次訊號已送出；`last_run.json`、`git status -sb`、線上四頁三方一致，心跳判定正確。詳見 `@docs/DEVLOG.md` 2026-10-03（龍蝦）段。
 - **這五個跨層問題目前沒有人會審，是已知的未審風險**（範圍 `e411787..03739ed`）。
   **2026-09-26 使用者決定不在家用機跑 Codex review**，此前的計畫（在有 Codex CLI 的那台跑架構層複審）取消。
   實作層已由本機 `/code-review`（high）審過並修完十項，但下面這五題屬於跨層行為，**沒有被任何人審查過**。
@@ -260,6 +251,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-10-03（龍蝦）** — 10-01 主 job／10-02 心跳首次正式執行本機端覆核：autoStash 有效、心跳 exit 0、三方交叉一致，待辦結案
 - **2026-10-03** — 10-01 排程有成功上線，但主日日期寫成 09.29（應為 09.27，upload_date 晚於開播日）：手動更正、yt-dlp 日期改 `release_date` 優先、新增 `test_date_fields.py`；測試 38 條
 - **2026-09-30** — 測試會污染正式 `heartbeat.log`（596 行假紀錄，含假的「Telegram 已送出」）：測試改把 log 路徑導到暫存、加守門條 G、整檔清除；測試 36 條
 - **2026-09-26，第五段** — RWD 三寬度實機驗證（youth 中英兩頁 × 390／768／1280，六組全過），待辦結案

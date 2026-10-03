@@ -10,6 +10,44 @@
 
 ---
 
+## 本次修改記錄（2026-10-03，龍蝦）— 10-01 主 job／10-02 心跳首次正式執行：本機端覆核通過
+
+接續同日家用機那段（遠端能看到的部分），把只存在龍蝦本機的 log 與狀態檔看完。純覆核，沒改程式。
+
+### 10-01 21:00 主 job（`rebase.autoStash` 首次實戰）
+
+- `update_sunday_launchd.log` 10-01 段：21:00:05 開始 → commit `e194599` → `pull --rebase` → 21:00:21 push 完成，結尾 `=== 完成，已自動 push ===`。
+- `cannot pull with rebase` 與 `fatal: no rebase in progress` 只出現在 09-24 那段（第 272、283 行），10-01 段**沒有**。autoStash 修正實戰有效。
+
+### 10-02 10:07 心跳（首次由 launchd 跑）
+
+- `launchctl print gui/501/com.jesusway.update-sunday-heartbeat`：`runs = 1`、`last exit code = 0`，program 為 `/opt/homebrew/bin/python3`。
+- `heartbeat_launchd.log`／`heartbeat.log` 內容相同，三行：開始 → `Telegram 已送出` → `已發存活／首次執行訊號`；無 traceback、無 TCC／PATH 類 spawn 錯誤。
+- `heartbeat_state.json`：`last_run` 與 `last_notified` 都是 `2026-10-02T10:07:03`。
+- 讀碼確認：首次訊號只在 `read_last_run`、`fetch_remote`、`check_content`、`check_unpushed` 全部無問題且 `exit` 為 0 時才會發，所以這則訊號＝心跳判定「本週全部通過」。
+
+### 獨立三方覆核（不採信心跳判定）
+
+| 來源 | 結果 |
+|---|---|
+| `logs/last_run.json` | `run_at` 10-01 21:00:05、`source` local、主日候選 `_o_9r6qJUPw`、樣青候選 `fcmrvY8uMQc`、`en_fallback.主日` false、`pushed` true、`exit` 0 |
+| `git status -sb` | `## main...origin/main`（無 ahead／behind，工作樹乾淨） |
+| 線上四頁（`curl -sL https://www.jesuswaytaipei.org/...`，加 query 避快取） | `sunday.html`／`en/sunday.html` 第一列 `_o_9r6qJUPw`；`youth.html`／`en/youth.html` 第一列 `fcmrvY8uMQc` |
+
+三方一致，心跳判定正確。樣青那支 log 寫「中英文表格皆已有，跳過」，所以 `en_fallback` 沒有樣青這個 key 是預期的。
+線上主日日期現在是 2026.09.27（家用機 `619c040` 更正後）；10-02 心跳跑的時候還是錯的 09.29。
+
+### 觀察（不是心跳判錯）
+
+日期寫錯（09.29）這件事**三層都沒抓到**：心跳比的是「候選影片是否出現在第一列」，不檢查日期對不對，這在判準的範圍外。
+是家用機人工看線上才發現的。目前靠 `tests/test_date_fields.py` 釘住 release 優先，沒有執行期的檢查。記下來，不另開待辦。
+
+### 尚未驗證
+
+- Telegram 訊息「送出」只是 API 回成功，**使用者手機有沒有收到這則首次執行訊號**，本機查不到，要使用者確認。
+
+---
+
 ## 本次修改記錄（2026-10-03）— 10-01 排程成功上線，但主日日期寫成 09.29
 
 使用者問「週四晚上的排程有成功嗎」，家用機（無 `yt-dlp`／`gh`／launchd）從遠端查。
