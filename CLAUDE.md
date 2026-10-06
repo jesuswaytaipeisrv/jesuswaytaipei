@@ -206,6 +206,8 @@
 
 ## 待辦（跨機器）
 
+- **SEO 基礎建設（2026-10-06 開單，待 CLI 施作）**：robots.txt、sitemap.xml、18 頁 canonical＋hreflang、首頁 JSON-LD、回歸測試。
+  完整規格、驗收條件 V1–V7 與使用者待辦（Search Console、Google 商家檔案）在 **`@docs/SEO_HANDOFF.md`**，照該檔施作，完成後依其第 3 節 G 項改寫本條。
 - **（選做，不急）GitHub 網域驗證**：GitHub 頭像 → Settings → Pages → Add a domain → `jesuswaytaipei.org`，照指示在 Cloudflare 加 `_github-pages-challenge-jesuswaytaipeisrv` TXT（灰雲）→ Verify。防止 repo 自訂網域設定被拿掉時他人認領本網域（2026-09-28 Security Insights 判讀的衍生待辦）。
 - ~~查 09-10（四）本機 launchd 為何沒推 09-06 主日~~ **已在龍蝦查過（2026-09-17）**：兩份 log 09-10 都**一行沒有**，launchd 根本沒觸發；
   機器當時醒著、設定正確、21:19 人工重開機；unified log 已輪替，觸發為何被跳過查不到。詳見 `@docs/DEVLOG.md` 2026-09-17 段。
