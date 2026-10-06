@@ -38,7 +38,18 @@
 - **V4 validator.schema.org**（程式碼片段模式貼整頁原始碼）：中、英首頁都辨識出 **Church、0 錯誤、1 警告**。
   警告內容：`email` 不是 `Church` 的有效屬性——schema.org 的 Church 繼承自 Place（地點），不是 Organization，所以沒有 email。
   規格明定要放 email 且只要求 0 error，故保留；Google 不會因此拒絕整段資料。若想消掉警告，可改成 `"@type": ["Church", "Organization"]`（**未做，待使用者決定**）。
-- V1／V2 本機已過（`python3 -m http.server` 開 `/robots.txt` 內容正確）；**正式網址的驗證在 push 後補記於下**。
+- V1／V2 本機已過（`python3 -m http.server` 開 `/robots.txt` 內容正確）。
+
+### 上線（commit `73ff2a0`）與正式網址驗證
+- **Pages 部署卡在 `waiting` 一個多小時**（17:37 push 後，build 成功、deploy job 一直 `waiting`）。用 Keychain PAT 打 API 查：
+  `pending_deployments` 的 `reviewers` 為空、`wait_timer` 0；`github-pages` 環境只有分支規則（`main`，符合）；
+  deployment status 只有一筆 `waiting`（10-03 那次是 `waiting`→`queued` 隔 1 秒）；githubstatus 全綠。→ 判定為 GitHub 端卡住，不是設定問題。
+  處理：`POST /actions/runs/37444241471/cancel`（202）→ 確認 `cancelled` → `POST …/rerun`（201）→ 約 1 分鐘 build、deploy 都 success。
+  這和已知的「Pages 間歇逾時**失敗**」是不同形態（這次不會失敗、會一直等），解法相同：取消後重跑。
+- **V1**：正式 `/robots.txt` 200，內容與 repo 一致，未擋首頁／`/en/`／`/assets/`。
+- **V2**：正式 `sitemap.xml` 讀出 18 個 `<loc>`，逐一 `curl` **全部 200**；同時抓每頁 HTML 確認 canonical＝自身網址、hreflang 3 行、GA 片段 1 段，18/18 OK。
+- 正式首頁 JSON-LD：中英各 1 段、`@type` Church、`url` 正確。
+- 開發文件（`/CLAUDE.html`、`/docs/DEVLOG.html`、`/update_sunday.py`）仍然 200——robots 只是請搜尋引擎別收錄，不擋讀取，符合預期。
 
 ### 尚未驗證
 - GA4 即時報表有沒有收到自己那筆（V5 後半）：要使用者登入 GA 看，CLI 做不到。本機只驗了 gtag 有載入。

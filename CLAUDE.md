@@ -182,6 +182,7 @@
 - `/g/collect` 顯示 **503 是假象**（gtag 走 `sendBeacon`／`keepalive`，攔截層狀態碼判讀不準），一律以 GA4 即時報表為準。（2026-08-06）
 - 刻意**不設「排除內部流量」**（對外是 HiNet 浮動 IP，規則會默默失效）。要做請改用 GA Opt-out 瀏覽器擴充。（2026-08-06）
 - GitHub Pages 憑證卡住不簽出時，解法是做**一次**乾淨的 Remove → 等 2 分鐘 → 重填 Custom domain。（2026-06-17）
+- **Pages 部署可能卡在 `waiting` 不動**（build 成功、deploy job 永遠等，不會變失敗）。本 repo 的 `github-pages` 環境**沒有核准關卡**（無 reviewers、wait_timer 0，只有 `main` 分支規則），所以不是在等人核准，是 GitHub 端卡住。解法：**Cancel → Re-run**，家用機沒 `gh` 就用 Keychain PAT 打 `POST /actions/runs/<id>/cancel` 再 `…/rerun`。正常部署 1 分鐘內完成，超過 10 分鐘就當卡住處理。（2026-10-06）
 
 **Gemini API key**
 - 變數名是 `GOOGLE_API_KEY`，**不是** `GEMINI_API_KEY`。全部專案裡只有這裡不一樣，是刻意保留的現狀；三處必須一致：`update_sunday.py`（翻譯函式）、`.github/workflows/update_sunday.yml`、GitHub repo secret。2026-06 就是因為 script 寫 `GEMINI_API_KEY`、`.env` 實際是 `GOOGLE_API_KEY` 而壞過一次（見 `@docs/DEVLOG.md`），要改名三處一起改。（2026-08-30）
@@ -260,7 +261,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
-- **2026-10-06** — SEO 基礎建設：`robots.txt`、`sitemap.xml`、18 頁 canonical＋hreflang、兩首頁 Church JSON-LD、`test_seo_head.py`（12 條）；外觀逐像素比對零變動；測試 50 條
+- **2026-10-06** — SEO 基礎建設：`robots.txt`、`sitemap.xml`、18 頁 canonical＋hreflang、兩首頁 Church JSON-LD、`test_seo_head.py`（12 條）；外觀逐像素比對零變動；測試 50 條；Pages 部署卡 `waiting` 以 cancel＋rerun 解，正式網址 18 頁驗過
 - **2026-10-03（龍蝦）** — 10-01 主 job／10-02 心跳首次正式執行本機端覆核：autoStash 有效、心跳 exit 0、三方交叉一致，待辦結案
 - **2026-10-03** — 10-01 排程有成功上線，但主日日期寫成 09.29（應為 09.27，upload_date 晚於開播日）：手動更正、yt-dlp 日期改 `release_date` 優先、新增 `test_date_fields.py`；測試 38 條
 - **2026-09-30** — 測試會污染正式 `heartbeat.log`（596 行假紀錄，含假的「Telegram 已送出」）：測試改把 log 路徑導到暫存、加守門條 G、整檔清除；測試 36 條
