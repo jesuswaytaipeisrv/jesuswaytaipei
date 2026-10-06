@@ -215,7 +215,7 @@
      1–2 週後回 Search Console 看「網頁」與「成效」報表。
   2. **Google 商家檔案**（效果最大）：先在 Google 地圖搜「台北樣教會」，有就認領、沒有就到 business.google.com 新增；
      用 `jesuswaytaipei@gmail.com` 建、類別「教會」。完成後若有商家檔案網址，可加進兩個首頁 JSON-LD 的 `sameAs`。
-  3. **GA4 即時報表**確認改版後仍收得到自己那筆（CLI 只驗了 gtag 有載入）。
+  3. ~~**GA4 即時報表**~~ **已確認（2026-10-06）**：改版上線後開 `about.html`，即時總覽最近 1 分鐘出現 1 位活躍使用者，GA 照常收資料。
   4. （待決定）主日聚會時間要不要放上網站——放了才能補 JSON-LD 的聚會時間；
      以及要不要把 JSON-LD 改成 `["Church", "Organization"]` 消掉 validator 的 `email` 警告（目前 0 error、1 warning，不影響使用）。
 - **（選做，不急）GitHub 網域驗證**：GitHub 頭像 → Settings → Pages → Add a domain → `jesuswaytaipei.org`，照指示在 Cloudflare 加 `_github-pages-challenge-jesuswaytaipeisrv` TXT（灰雲）→ Verify。防止 repo 自訂網域設定被拿掉時他人認領本網域（2026-09-28 Security Insights 判讀的衍生待辦）。

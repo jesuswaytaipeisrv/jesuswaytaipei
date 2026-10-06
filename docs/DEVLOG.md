@@ -62,7 +62,7 @@
   英文首頁原本「網址不在 Google 服務中：Google 無法辨識的網址」——本來就沒被收錄，這次 hreflang＋sitemap 正好補上 → 要求建立索引。兩頁都回「已要求建立索引」。
 
 ### 尚未驗證
-- GA4 即時報表有沒有收到自己那筆（V5 後半）：要使用者登入 GA 看，CLI 做不到。本機只驗了 gtag 有載入。
+- ~~GA4 即時報表~~ **已驗（同日）**：用使用者已登入 GA 的 Chrome（`jesuswaytaipeisrv`，資源 `a403776527p548895294`、資料串流「官網」→ `https://www.jesuswaytaipei.org/`）開正式站 `about.html` → 即時總覽「每分鐘活躍使用者」最近 1 分鐘出現 1、All Users = 1。**V5 全部通過。**
 - Google 商家檔案：使用者操作，見 `CLAUDE.md` 待辦。
 
 ---
