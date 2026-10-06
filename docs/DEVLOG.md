@@ -51,9 +51,19 @@
 - 正式首頁 JSON-LD：中英各 1 段、`@type` Church、`url` 正確。
 - 開發文件（`/CLAUDE.html`、`/docs/DEVLOG.html`、`/update_sunday.py`）仍然 200——robots 只是請搜尋引擎別收錄，不擋讀取，符合預期。
 
+### Google Search Console 開通（同日晚上，用使用者的 Chrome 代操作）
+- 帳號：`jesuswaytaipeisrv@gmail.com`（使用者選定；交接單原建議的 `jesuswaytaipei@gmail.com` 未登入在瀏覽器）。
+  注意兩台 Chrome 的多帳號順序不同：家用機那台 `/u/0` 是個人帳號 `ehomehuang`、`/u/1` 才是 `jesuswaytaipeisrv`，網址要帶對 `/u/N`。
+- 驗證：Search Console 提供「授權 Google 存取 Cloudflare DNS」的捷徑，**刻意不用**（會把 DNS 寫入權交給 Google），改選「任何 DNS 供應商」手動加 TXT。
+  使用者自己登入 Cloudflare（Google SSO＋驗證器），我在 DNS 加一筆 TXT（名稱 `@`、內容 `google-site-verification=Xo7k…Uyyc`、TTL 自動）。
+  `dig @peaches.ns.cloudflare.com` 與 `dig @8.8.8.8` 立即查得到；原 4 筆 A 紀錄未變。回 Search Console →「已自動驗證擁有權」（網域名稱供應商）。
+- Sitemap：提交 `https://www.jesuswaytaipei.org/sitemap.xml` →「已成功提交 Sitemap」（剛提交時探索到 0 頁屬正常，要等 Google 處理）。
+- 網址審查：中文首頁原本就「網址在 Google 服務中」（舊版）→ 要求建立索引，讓 Google 重抓新 head；
+  英文首頁原本「網址不在 Google 服務中：Google 無法辨識的網址」——本來就沒被收錄，這次 hreflang＋sitemap 正好補上 → 要求建立索引。兩頁都回「已要求建立索引」。
+
 ### 尚未驗證
 - GA4 即時報表有沒有收到自己那筆（V5 後半）：要使用者登入 GA 看，CLI 做不到。本機只驗了 gtag 有載入。
-- Search Console／Google 商家檔案：使用者操作，見 `CLAUDE.md` 待辦。
+- Google 商家檔案：使用者操作，見 `CLAUDE.md` 待辦。
 
 ---
 

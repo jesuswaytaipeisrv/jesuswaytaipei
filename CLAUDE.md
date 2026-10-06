@@ -209,8 +209,10 @@
 ## 待辦（跨機器）
 
 - **SEO 上線後要使用者本人做的事**（程式部分 2026-10-06 已完成，見 `@docs/DEVLOG.md` 同日段；完整步驟在 `@docs/SEO_HANDOFF.md` 第 6 節）：
-  1. **Google Search Console**：新增「網域」資源 `jesuswaytaipei.org` → Cloudflare DNS 加 `google-site-verification=…` TXT（名稱 `@`，灰雲）→ 驗證 →
-     Sitemap 提交 `https://www.jesuswaytaipei.org/sitemap.xml` → 網址審查首頁、要求建立索引。可與下方「GitHub 網域驗證」的 TXT 同一次登入 Cloudflare 一起加。
+  1. ~~**Google Search Console**~~ **已完成（2026-10-06）**：「網域」資源 `jesuswaytaipei.org`，擁有者帳號 **`jesuswaytaipeisrv@gmail.com`**
+     （不是 `jesuswaytaipei@gmail.com`，使用者選的；通知信寄到這個信箱）。Cloudflare 根網域 `@` 有一筆 `google-site-verification=…` TXT
+     ——**不可刪，刪了資源會失去驗證**。sitemap 已提交成功；中英首頁都已要求建立索引（中文首頁原本就有收錄、英文首頁原本「Google 無法辨識」）。
+     1–2 週後回 Search Console 看「網頁」與「成效」報表。
   2. **Google 商家檔案**（效果最大）：先在 Google 地圖搜「台北樣教會」，有就認領、沒有就到 business.google.com 新增；
      用 `jesuswaytaipei@gmail.com` 建、類別「教會」。完成後若有商家檔案網址，可加進兩個首頁 JSON-LD 的 `sameAs`。
   3. **GA4 即時報表**確認改版後仍收得到自己那筆（CLI 只驗了 gtag 有載入）。
