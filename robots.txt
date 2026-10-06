@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /docs/
+Disallow: /tests/
+Disallow: /CLAUDE
+Disallow: /README
+Disallow: /DOMAIN_
+Disallow: /update_sunday.py
+Disallow: /heartbeat.py
+
+Sitemap: https://www.jesuswaytaipei.org/sitemap.xml

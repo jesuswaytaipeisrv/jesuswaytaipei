@@ -34,6 +34,27 @@
 
 報表在 https://analytics.google.com/ 查看。GA4 免費版即可，無費用。
 
+### 新增頁面檢查清單（SEO，2026-10-06 起）
+
+新增一頁（中英兩頁一起新增）時，下面四件事**最容易漏**，漏了 `bash tests/run_all.sh` 會失敗：
+
+1. **GA 片段**：上面那段貼在 `</head>` 前（每頁恰好一次）
+2. **canonical**：`og:url` 那行後面加一行，值與該頁 `og:url` 完全相同
+   ```html
+   <link rel="canonical" href="https://www.jesuswaytaipei.org/xxx.html">
+   ```
+3. **hreflang 三行**：**中英兩頁內容完全相同**（雙向，少一邊 Google 會整組忽略）
+   ```html
+   <link rel="alternate" hreflang="zh-Hant" href="https://www.jesuswaytaipei.org/xxx.html">
+   <link rel="alternate" hreflang="en" href="https://www.jesuswaytaipei.org/en/xxx.html">
+   <link rel="alternate" hreflang="x-default" href="https://www.jesuswaytaipei.org/xxx.html">
+   ```
+4. **`sitemap.xml`**：中英各加一行 `<url><loc>…</loc></url>`（不加 `lastmod`，沒有自動維護就別寫）
+
+`robots.txt` 擋掉了開發文件（`/docs/`、`/tests/`、`/CLAUDE*`、`/README*`、`/DOMAIN_*`、兩支 `.py`）——
+GitHub Pages 會把這些檔案對外提供，`.md` 還會被 Jekyll 轉成 `.html`。新增根目錄開發文件時，記得檢查要不要補一行。
+兩個首頁另有 Church 結構化資料（JSON-LD），地址或聯絡方式改了要一起改。
+
 ---
 
 ## 頁面結構

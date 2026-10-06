@@ -10,6 +10,42 @@
 
 ---
 
+## 本次修改記錄（2026-10-06）— SEO 基礎建設：robots／sitemap／canonical／hreflang／JSON-LD
+
+依 `docs/SEO_HANDOFF.md` 施作（家用機）。只動 `<head>` 與根目錄靜態檔，**頁面外觀零變動**；`<title>`、description、內文都沒碰。
+
+### 改了什麼
+- **`robots.txt`（新）**：全站 Allow，擋 `/docs/`、`/tests/`、`/CLAUDE`、`/README`、`/DOMAIN_`、兩支 `.py`；附 Sitemap 行。
+  施作前實查正式站：`/CLAUDE.html`、`/CLAUDE.md`、`/docs/DEVLOG.html`、`/docs/DEVLOG.md`、`/README.md`、`/DOMAIN_SETUP.html`、
+  `/DOMAIN_CHECKLIST.html`、`/tests/`、`/tests/run_all.sh`、`/update_sunday.py`、`/heartbeat.py` **全部 200**（Jekyll 把 `.md` 轉成 `.html`，原檔也照樣提供）；
+  `/README.html` 404。規格裡的前綴規則已全數涵蓋，不必調整。`/assets/` 刻意不擋。
+  ⚠️ robots 只防收錄、不防讀取：這些開發文件**本來就公開可讀**（repo 是 public），這次沒有改變這件事。
+- **`sitemap.xml`（新）**：18 個 `<loc>`，與各頁 `og:url` 逐字相同；不放 `lastmod`／`changefreq`／`priority`。
+- **18 頁 `<head>`**：`og:url` 那行之後插入 canonical＋hreflang（zh-Hant／en／x-default）共 4 行，縮排沿用該頁。
+  用一次性腳本插入（插入前 assert 該頁 `og:url` 等於檔名推得的網址），`git diff --numstat` 確認 18 檔都是 `+4 -0`，腳本用完已刪。
+  `creative.html`／`worship.html` 的 head 是兩格縮排的 `<head>`，但 meta 本身仍是 4 空格，照樣對齊。
+- **兩個首頁**：GA 註解前插入 Church JSON-LD（名稱、網址、圖、email、地址、YouTube／LINE）。不填 `openingHours`／`telephone`／`postalCode`／`geo`——站上沒有，不自編。
+- **`tests/test_seo_head.py`（新，12 條）**，已納入 `run_all.sh` 與 `tests/README.md`。頁面清單從檔案系統掃出來，不寫死。
+- 文件：README 加「新增頁面檢查清單」、DOMAIN_SETUP 階段二補「置換範圍含 xml／txt／JSON-LD＋Search Console 網址變更」。
+
+### 測試與驗證
+- `bash tests/run_all.sh`：**50 條全過**（heartbeat 28、git_commit 4、last_run_state 4、date_fields 2、seo_head 12）。週四排程（V6）不受影響。
+- **V7 新增頁面漏貼會被擋**：臨時 `cp about.html zz.html` → 4 條失敗（8a 中英檔名不對稱、1 canonical 不符、4 頁數不符、8c sitemap 缺）；刪掉後 12/12。
+- **變異測試**（在暫存複本上，各自單獨破壞一處）全部被抓到：英文頁少一行 hreflang、GA 重複、robots `Disallow: /`、sitemap 少一頁、JSON-LD 塞 telephone、canonical 指錯頁。
+- **V5 外觀零變動（實際瀏覽器）**：Playwright 在 390／1280 viewport 開 `index`、`en/index`、`about`、`en/youth`，
+  同時開改前版本（`git archive HEAD` 另起一個 server）做**全頁截圖逐像素比對：8 組全部完全相同**；
+  兩種寬度都無水平捲動；`window.gtag` 存在、`dataLayer` 有資料。
+- **V4 validator.schema.org**（程式碼片段模式貼整頁原始碼）：中、英首頁都辨識出 **Church、0 錯誤、1 警告**。
+  警告內容：`email` 不是 `Church` 的有效屬性——schema.org 的 Church 繼承自 Place（地點），不是 Organization，所以沒有 email。
+  規格明定要放 email 且只要求 0 error，故保留；Google 不會因此拒絕整段資料。若想消掉警告，可改成 `"@type": ["Church", "Organization"]`（**未做，待使用者決定**）。
+- V1／V2 本機已過（`python3 -m http.server` 開 `/robots.txt` 內容正確）；**正式網址的驗證在 push 後補記於下**。
+
+### 尚未驗證
+- GA4 即時報表有沒有收到自己那筆（V5 後半）：要使用者登入 GA 看，CLI 做不到。本機只驗了 gtag 有載入。
+- Search Console／Google 商家檔案：使用者操作，見 `CLAUDE.md` 待辦。
+
+---
+
 ## 本次修改記錄（2026-10-03，龍蝦）— 10-01 主 job／10-02 心跳首次正式執行：本機端覆核通過
 
 接續同日家用機那段（遠端能看到的部分），把只存在龍蝦本機的 log 與狀態檔看完。純覆核，沒改程式。

@@ -61,7 +61,13 @@ Hinet、網路家庭 PChome 等）申請；組織型 `.org.tw` 通常需附立�
 2. **Repo 切換正式網域**：
    - `CNAME` 檔改為 `www.jesuswaytaipei.org.tw`
    - 全站寫死網址置換：`https://www.jesuswaytaipei.org/` → `https://www.jesuswaytaipei.org.tw/`
+     - **置換範圍不只 HTML**（2026-10-06 補）：還有 `robots.txt` 的 Sitemap 行、`sitemap.xml`、
+       兩個首頁的 JSON-LD，以及每頁的 canonical／hreflang。用
+       `grep -rl 'jesuswaytaipei\.org/' --include='*.html' --include='*.xml' --include='*.txt' .` 掃，不要只掃 `*.html`；
+       另外 `tests/test_seo_head.py` 的 `BASE` 常數也要改，換完跑 `bash tests/run_all.sh` 全過才 push
    - commit & push。
+   - 上線後到 **Google Search Console** 用「網址變更」工具申報 `.org` → `.org.tw`（兩個網域都要先在 Search Console 驗證），
+     並在新網域資源重新提交 `sitemap.xml`。
 3. **GitHub Pages**：Custom domain 改填 `www.jesuswaytaipei.org.tw`，重新勾 Enforce HTTPS。
 4. **把 .org 改成 301 轉址到 .org.tw**（用 Cloudflare）：
    - 移除 / 停用 `.org` zone 內指向 GitHub Pages 的 A、CNAME 紀錄

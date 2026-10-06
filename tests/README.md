@@ -1,7 +1,7 @@
-# tests — 週四批次與心跳的回歸測試
+# tests — 週四批次、心跳與 SEO head 的回歸測試
 
 ```bash
-bash tests/run_all.sh          # 全部（38 條，約 10 秒）
+bash tests/run_all.sh          # 全部（50 條，約 10 秒）
 python3 tests/test_heartbeat.py   # 單跑一支
 ```
 
@@ -19,6 +19,7 @@ Telegram 一律安全：token 在測試中置空，而 `load_env()` 用 `setdefa
 | `test_git_commit.py` | 4 | `git_commit()` 的 `rebase.autoStash`、只在真的卡住時才 abort、autoStash × 真衝突不留 stash |
 | `test_date_fields.py` | 2 | 標題無日期時的 yt-dlp 日期欄位順序：`release_date` 優先、非直播退回 `upload_date`（假 `yt-dlp` 放在 PATH，`fetch_latest_streams()` 走真實路徑） |
 | `test_last_run_state.py` | 4 | 心跳的訊號來源 `logs/last_run.json`：欄位齊全、`SystemExit` 路徑也落盤、舊內容會被覆蓋 |
+| `test_seo_head.py` | 12 | SEO 基礎建設（`docs/SEO_HANDOFF.md` F 項）：canonical＝`og:url`、hreflang 三行雙向一致且指向真實檔案、`sitemap.xml` 與頁面集合相等、`robots.txt` 沒擋首頁／`assets/`、首頁 Church JSON-LD、GA 片段每頁恰好一次、中英頁檔名集合相同（新增頁面漏貼會失敗）。頁面清單從檔案系統掃出、不寫死 |
 
 ## 為什麼 stub 只降到 `git()` 這一層
 

@@ -4,7 +4,7 @@
 set -u
 cd "$(dirname "$0")/.."
 fail=0
-for t in tests/test_heartbeat.py tests/test_git_commit.py tests/test_last_run_state.py tests/test_date_fields.py; do
+for t in tests/test_heartbeat.py tests/test_git_commit.py tests/test_last_run_state.py tests/test_date_fields.py tests/test_seo_head.py; do
   echo "═══ $t ═══"
   if python3 "$t"; then :; else fail=1; fi
   echo

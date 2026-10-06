@@ -30,6 +30,7 @@
 - Google Fonts：Noto Sans TC
 - 語言：繁體中文（`lang="zh-Hant"`）+ 英文（`en/`，`lang="en"`）
 - Google Analytics 4：評估 ID `G-6BH0T2SH0Y`（gtag.js，全 18 頁 `</head>` 前）
+- SEO（2026-10-06 起）：根目錄 `robots.txt`／`sitemap.xml`、18 頁 canonical＋hreflang、兩個首頁 Church JSON-LD。**新增頁面照 README「新增頁面檢查清單」**，漏貼會被 `tests/test_seo_head.py` 擋下
 
 ---
 
@@ -68,7 +69,7 @@
   - 觸發告警的情形有三種，都會寫 workflow output `check_failed=true`（2026-09-04 由 `date_fetch_failed` 更名）：抓不到頻道清單、清單回 0 筆、候選影片 ID 不在站上表格中
   - 舊做法（已淘汰）：2026-07-17～09-04 CI 端是寄信到 `jesuswaytaipeisrv@gmail.com`，那不是日常會看的信箱，2026-08-06 那封警告信就是這樣被忽略的；且該信自 07-30 起連續六次都是誤報
 
-**測試：** `bash tests/run_all.sh`（38 條：心跳判準 28、`git_commit()` 4、`last_run.json` 4、日期欄位順序 2）。涵蓋範圍與**沒涵蓋的部分**寫在 `tests/README.md`。
+**測試：** `bash tests/run_all.sh`（50 條：心跳判準 28、`git_commit()` 4、`last_run.json` 4、日期欄位順序 2、SEO head 12）。涵蓋範圍與**沒涵蓋的部分**寫在 `tests/README.md`。
 
 **`update_sunday.py` 一次更新的檔案：**
 - `sunday.html` + `en/sunday.html`（主日信息表格）
@@ -112,7 +113,7 @@
 **時間戳只在真的送出去時才更新**——送失敗卻記上去，等於讓「管道壞了」被沉默上限判斷成「剛通知過」，於是繼續安靜四週。這個缺陷 2026-09-26 實作當天就踩到並修掉（見 DEVLOG）。
 
 ### 驗收條件（每條都是「使用者做得到 X」，commit 前逐條對照）
-**改判準或改 `heartbeat.py` 之前先跑 `bash tests/run_all.sh`（38 條）**，下面每一條都有對應測試釘住。測試不需要網路／`yt-dlp`／`gh`，也不會發 Telegram，任何一台都能跑。
+**改判準或改 `heartbeat.py` 之前先跑 `bash tests/run_all.sh`（50 條）**，下面每一條都有對應測試釘住。測試不需要網路／`yt-dlp`／`gh`，也不會發 Telegram，任何一台都能跑。
 1. 週四排程完全沒觸發時，使用者在週五上午收到一則 ⚠️，訊息明說「當天沒有任何執行紀錄」。
 2. 排程跑了但內容沒推上 `origin/main` 時，使用者收到 ⚠️，訊息指出候選日期與站上日期各是什麼。
 3. 內容已推上 `origin/main` 但線上網站還是舊的時候，使用者收到 ⚠️，且能從訊息分辨這是**部署層**而非更新層的問題。
@@ -206,8 +207,14 @@
 
 ## 待辦（跨機器）
 
-- **SEO 基礎建設（2026-10-06 開單，待 CLI 施作）**：robots.txt、sitemap.xml、18 頁 canonical＋hreflang、首頁 JSON-LD、回歸測試。
-  完整規格、驗收條件 V1–V7 與使用者待辦（Search Console、Google 商家檔案）在 **`@docs/SEO_HANDOFF.md`**，照該檔施作，完成後依其第 3 節 G 項改寫本條。
+- **SEO 上線後要使用者本人做的事**（程式部分 2026-10-06 已完成，見 `@docs/DEVLOG.md` 同日段；完整步驟在 `@docs/SEO_HANDOFF.md` 第 6 節）：
+  1. **Google Search Console**：新增「網域」資源 `jesuswaytaipei.org` → Cloudflare DNS 加 `google-site-verification=…` TXT（名稱 `@`，灰雲）→ 驗證 →
+     Sitemap 提交 `https://www.jesuswaytaipei.org/sitemap.xml` → 網址審查首頁、要求建立索引。可與下方「GitHub 網域驗證」的 TXT 同一次登入 Cloudflare 一起加。
+  2. **Google 商家檔案**（效果最大）：先在 Google 地圖搜「台北樣教會」，有就認領、沒有就到 business.google.com 新增；
+     用 `jesuswaytaipei@gmail.com` 建、類別「教會」。完成後若有商家檔案網址，可加進兩個首頁 JSON-LD 的 `sameAs`。
+  3. **GA4 即時報表**確認改版後仍收得到自己那筆（CLI 只驗了 gtag 有載入）。
+  4. （待決定）主日聚會時間要不要放上網站——放了才能補 JSON-LD 的聚會時間；
+     以及要不要把 JSON-LD 改成 `["Church", "Organization"]` 消掉 validator 的 `email` 警告（目前 0 error、1 warning，不影響使用）。
 - **（選做，不急）GitHub 網域驗證**：GitHub 頭像 → Settings → Pages → Add a domain → `jesuswaytaipei.org`，照指示在 Cloudflare 加 `_github-pages-challenge-jesuswaytaipeisrv` TXT（灰雲）→ Verify。防止 repo 自訂網域設定被拿掉時他人認領本網域（2026-09-28 Security Insights 判讀的衍生待辦）。
 - ~~查 09-10（四）本機 launchd 為何沒推 09-06 主日~~ **已在龍蝦查過（2026-09-17）**：兩份 log 09-10 都**一行沒有**，launchd 根本沒觸發；
   機器當時醒著、設定正確、21:19 人工重開機；unified log 已輪替，觸發為何被跳過查不到。詳見 `@docs/DEVLOG.md` 2026-09-17 段。
@@ -253,6 +260,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-10-06** — SEO 基礎建設：`robots.txt`、`sitemap.xml`、18 頁 canonical＋hreflang、兩首頁 Church JSON-LD、`test_seo_head.py`（12 條）；外觀逐像素比對零變動；測試 50 條
 - **2026-10-03（龍蝦）** — 10-01 主 job／10-02 心跳首次正式執行本機端覆核：autoStash 有效、心跳 exit 0、三方交叉一致，待辦結案
 - **2026-10-03** — 10-01 排程有成功上線，但主日日期寫成 09.29（應為 09.27，upload_date 晚於開播日）：手動更正、yt-dlp 日期改 `release_date` 優先、新增 `test_date_fields.py`；測試 38 條
 - **2026-09-30** — 測試會污染正式 `heartbeat.log`（596 行假紀錄，含假的「Telegram 已送出」）：測試改把 log 路徑導到暫存、加守門條 G、整檔清除；測試 36 條
