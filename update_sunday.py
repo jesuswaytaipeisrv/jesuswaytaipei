@@ -281,7 +281,9 @@ def parse_sunday_title_speaker(raw_title):
     parts = [p.strip() for p in raw.split("|") if p.strip()]
 
     # 去除雜訊關鍵字本身，保留段落中的剩餘文字（例如「台北樣教會 吳必然 牧師」→「吳必然 牧師」）
-    noise_keywords = ["台北樣線上主日", "台北樣教會", "台北樣"]
+    # 長的放前面。「線上主日」單獨列：2026-10 起結尾段改成「台北樣教會線上主日」，
+    # 只去掉「台北樣教會」會剩「線上主日」被當成講員（10.04、10.11 兩週站上講員寫錯）
+    noise_keywords = ["台北樣教會線上主日", "台北樣線上主日", "台北樣教會", "台北樣", "線上主日"]
     def strip_noise(text):
         for kw in noise_keywords:
             text = text.replace(kw, "")
