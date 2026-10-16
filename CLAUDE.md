@@ -214,21 +214,14 @@
      （不是 `jesuswaytaipei@gmail.com`，使用者選的；通知信寄到這個信箱）。Cloudflare 根網域 `@` 有一筆 `google-site-verification=…` TXT
      ——**不可刪，刪了資源會失去驗證**。sitemap 已提交成功；中英首頁都已要求建立索引（中文首頁原本就有收錄、英文首頁原本「Google 無法辨識」）。
      1–2 週後回 Search Console 看「網頁」與「成效」報表。
-     **2026-10-16 已看（Claude 經 Chrome 唯讀查看）**：
-     - sitemap 10/14 讀取成功、探索到 18 頁；**已建立索引 15 頁**，其餘 3 頁（`en/contact.html`、`en/sunday.html`、`worship.html`）
-       是「已找到 - 目前尚未建立索引」（10/10 首次偵測，新站常見）。**同日已逐頁「網址審查 → 要求建立索引」，三頁都顯示「已要求建立索引」**；
-       「參照網頁：未偵測到」只是 Google 還沒爬，三頁在全站導覽列都有連結（已 grep 確認）。下次看「網頁」報表確認是否已收錄 18/18。
-     - 另外 5 筆未索引屬正常：3 筆重新導向（http／無 www 的首頁網址）、2 筆替代頁面（`index.html`、`en/index.html`，canonical 指向 `/`、`/en/`）。
-     - 成效（10/5–10/13，資料延遲 2–3 天）：點擊 15、曝光 175、平均排名 5.6。首頁占 12 次點擊；
-       「台北樣教會」排第 1.9 名、點閱率 27.8%；泛用詞「台北教會」第 8 名、「台北 教會」第 26 名、都沒點擊。
-       中文 `about.html` 曝光 33 次但排名 9.2、0 點擊。
-     - Search Console 沒有「強化項目／結構化資料」報表（Church 類型不是 Google 複合式搜尋結果類型），
-       第 4 項的 `email` 警告來自 schema validator，不在 Search Console 裡。
+     **2026-10-16 已看**：18 頁收錄 15；未收錄的 `en/contact.html`、`en/sunday.html`、`worship.html` 同日已要求建立索引。
+     ⏸ **下次看「網頁」報表確認是否 18/18**。成效 10/5–10/13 點擊 15／曝光 175，搜「台北樣教會」排 1.9、泛用詞「台北教會」排 8 且無點擊。
+     細節見 `@docs/DEVLOG.md` 2026-10-16 段。
   2. **Google 商家檔案**（效果最大）：先在 Google 地圖搜「台北樣教會」，有就認領、沒有就到 business.google.com 新增；
      用 `jesuswaytaipei@gmail.com` 建、類別「教會」。完成後若有商家檔案網址，可加進兩個首頁 JSON-LD 的 `sameAs`。
   3. ~~**GA4 即時報表**~~ **已確認（2026-10-06）**：改版上線後開 `about.html`，即時總覽最近 1 分鐘出現 1 位活躍使用者，GA 照常收資料。
   4. （待決定）主日聚會時間要不要放上網站——放了才能補 JSON-LD 的聚會時間；
-     以及要不要把 JSON-LD 改成 `["Church", "Organization"]` 消掉 validator 的 `email` 警告（目前 0 error、1 warning，不影響使用）。
+     以及要不要把 JSON-LD 改成 `["Church", "Organization"]` 消掉 schema validator 的 `email` 警告（目前 0 error、1 warning，不影響使用；Search Console 不會顯示這個警告）。
 - **（選做，不急）GitHub 網域驗證**：GitHub 頭像 → Settings → Pages → Add a domain → `jesuswaytaipei.org`，照指示在 Cloudflare 加 `_github-pages-challenge-jesuswaytaipeisrv` TXT（灰雲）→ Verify。防止 repo 自訂網域設定被拿掉時他人認領本網域（2026-09-28 Security Insights 判讀的衍生待辦）。
 - ~~查 09-10（四）本機 launchd 為何沒推 09-06 主日~~ **已在龍蝦查過（2026-09-17）**：兩份 log 09-10 都**一行沒有**，launchd 根本沒觸發；
   機器當時醒著、設定正確、21:19 人工重開機；unified log 已輪替，觸發為何被跳過查不到。詳見 `@docs/DEVLOG.md` 2026-09-17 段。
@@ -274,6 +267,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-10-16** — Search Console 上線十天報表：18 頁收錄 15，未收錄 3 頁已要求建立索引；成效點擊 15／曝光 175；`email` 警告是 schema validator 的、不在 Search Console（純文件，無程式變更）
 - **2026-10-15（龍蝦）** — 主日講員欄 10.04、10.11 寫成「線上主日」（標題結尾改為「台北樣教會線上主日」，去雜訊漏掉）：補雜訊關鍵字、中英兩列更正、新增 `test_title_parse.py`（3 條）；測試 53 條
 - **2026-10-06** — SEO 基礎建設：`robots.txt`、`sitemap.xml`、18 頁 canonical＋hreflang、兩首頁 Church JSON-LD、`test_seo_head.py`（12 條）；外觀逐像素比對零變動；測試 50 條；Pages 部署卡 `waiting` 以 cancel＋rerun 解，正式網址 18 頁驗過；Search Console 開通（DNS 驗證、sitemap、中英首頁要求索引）、GA4 即時確認，V1–V7 全過
 - **2026-10-03（龍蝦）** — 10-01 主 job／10-02 心跳首次正式執行本機端覆核：autoStash 有效、心跳 exit 0、三方交叉一致，待辦結案
