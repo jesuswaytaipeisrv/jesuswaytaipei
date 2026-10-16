@@ -214,6 +214,15 @@
      （不是 `jesuswaytaipei@gmail.com`，使用者選的；通知信寄到這個信箱）。Cloudflare 根網域 `@` 有一筆 `google-site-verification=…` TXT
      ——**不可刪，刪了資源會失去驗證**。sitemap 已提交成功；中英首頁都已要求建立索引（中文首頁原本就有收錄、英文首頁原本「Google 無法辨識」）。
      1–2 週後回 Search Console 看「網頁」與「成效」報表。
+     **2026-10-16 已看（Claude 經 Chrome 唯讀查看）**：
+     - sitemap 10/14 讀取成功、探索到 18 頁；**已建立索引 15 頁**，其餘 3 頁（`en/contact.html`、`en/sunday.html`、`worship.html`）
+       是「已找到 - 目前尚未建立索引」（10/10 首次偵測，新站常見，等 Google 自己來爬即可）。
+     - 另外 5 筆未索引屬正常：3 筆重新導向（http／無 www 的首頁網址）、2 筆替代頁面（`index.html`、`en/index.html`，canonical 指向 `/`、`/en/`）。
+     - 成效（10/5–10/13，資料延遲 2–3 天）：點擊 15、曝光 175、平均排名 5.6。首頁占 12 次點擊；
+       「台北樣教會」排第 1.9 名、點閱率 27.8%；泛用詞「台北教會」第 8 名、「台北 教會」第 26 名、都沒點擊。
+       中文 `about.html` 曝光 33 次但排名 9.2、0 點擊。
+     - Search Console 沒有「強化項目／結構化資料」報表（Church 類型不是 Google 複合式搜尋結果類型），
+       第 4 項的 `email` 警告來自 schema validator，不在 Search Console 裡。
   2. **Google 商家檔案**（效果最大）：先在 Google 地圖搜「台北樣教會」，有就認領、沒有就到 business.google.com 新增；
      用 `jesuswaytaipei@gmail.com` 建、類別「教會」。完成後若有商家檔案網址，可加進兩個首頁 JSON-LD 的 `sameAs`。
   3. ~~**GA4 即時報表**~~ **已確認（2026-10-06）**：改版上線後開 `about.html`，即時總覽最近 1 分鐘出現 1 位活躍使用者，GA 照常收資料。
