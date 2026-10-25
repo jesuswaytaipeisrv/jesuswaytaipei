@@ -100,8 +100,8 @@ GitHub Pages 會把這些檔案對外提供，`.md` 還會被 Jekyll 轉成 `.ht
   - Log：`~/Library/Logs/jesusway/heartbeat.log`（腳本自己）+ `heartbeat_launchd.log`（launchd 層）；state：`heartbeat_state.json`
   - 驗告警管道：`HEARTBEAT_TEST_ALERT=true /opt/homebrew/bin/python3 ~/documents/website/heartbeat.py`（送不出去會以非 0 結束）
   - 判準的完整理由與 11 條驗收條件在 `CLAUDE.md`「自動更新心跳」節
-- **測試：** `bash tests/run_all.sh`（36 條）。不需要網路、`yt-dlp` 或 `gh`，不會發 Telegram，不碰真實 repo 的 git 狀態，三台電腦都能跑。細節見 `tests/README.md`
-- Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）
+- **測試：** `bash tests/run_all.sh`（55 條）。不需要網路、`yt-dlp` 或 `gh`，不會發 Telegram，不碰真實 repo 的 git 狀態，三台電腦都能跑。細節見 `tests/README.md`
+- Log：本機執行寫 `logs/update_sunday.log`（腳本自己的內容 log，不受 TCC 影響）+ `~/Library/Logs/jesusway/update_sunday_launchd.log`（launchd 層 stdout/stderr）。2026-10-25 起每次都記整份頻道清單（`清單 #NN ID 標題`）與「主日／樣青候選：清單 #NN」，漏抓時先看這裡
 - 翻譯套件：`google-genai`，模型：`gemini-2.5-flash`（需 `GOOGLE_API_KEY`）
 - GitHub repo secrets：`GOOGLE_API_KEY`（Gemini 翻譯）、`GMAIL_APP_PASSWORD`（Gmail 應用程式密碼）
 - 金鑰所屬 Cloud 專案為 **`website-jesusway`（`gen-lang-client-0734466101`）**。
