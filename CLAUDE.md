@@ -267,6 +267,7 @@
 
 完整內容在 **`@docs/DEVLOG.md`**。大致新到舊，早期幾段的順序原本就沒排整齊，分流時維持原樣未動。
 
+- **2026-10-25（龍蝦）** — 10-22 本機排程漏抓樣青 10.18（選第一支含關鍵字的，原因未查明）；CI 補救層有發 Telegram 告警，心跳因早於 CI 實跑而沒抓到；手動 kickstart 補上（含主日 10.25），`fc52297`
 - **2026-10-16** — Search Console 上線十天報表：18 頁收錄 15，未收錄 3 頁已要求建立索引；成效點擊 15／曝光 175；`email` 警告是 schema validator 的、不在 Search Console（純文件，無程式變更）
 - **2026-10-15（龍蝦）** — 主日講員欄 10.04、10.11 寫成「線上主日」（標題結尾改為「台北樣教會線上主日」，去雜訊漏掉）：補雜訊關鍵字、中英兩列更正、新增 `test_title_parse.py`（3 條）；測試 53 條
 - **2026-10-06** — SEO 基礎建設：`robots.txt`、`sitemap.xml`、18 頁 canonical＋hreflang、兩首頁 Church JSON-LD、`test_seo_head.py`（12 條）；外觀逐像素比對零變動；測試 50 條；Pages 部署卡 `waiting` 以 cancel＋rerun 解，正式網址 18 頁驗過；Search Console 開通（DNS 驗證、sitemap、中英首頁要求索引）、GA4 即時確認，V1–V7 全過
