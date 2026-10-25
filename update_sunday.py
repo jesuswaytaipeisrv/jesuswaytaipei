@@ -150,6 +150,10 @@ def fetch_latest_streams(max_items=25):
         entries.append((vid.strip(), title.strip()))
 
     logging.info(f"取得 {len(entries)} 筆影片")
+    # 整份清單照抄進 log。2026-10-22 本機排程沒選到已公開三天的樣青 qPTkqGyKPj0，
+    # 當時只記了「取得 25 筆」，事後分不出是「不在清單」「標題當時沒有關鍵字」還是「排序在舊片之後」。
+    for i, (vid, title) in enumerate(entries, 1):
+        logging.info(f"  清單 #{i:02d} {vid} {title[:50]}")
     if not entries:
         # exit code 0 但空清單：限流或反機器人偵測時會這樣回。
         # 此時連候選影片 ID 都沒有，下面的「站上有沒有這支」比對無從做起，
@@ -159,13 +163,15 @@ def fetch_latest_streams(max_items=25):
 
     sunday_candidate = None
     youth_candidate  = None
-    for vid, title in entries:
+    for i, (vid, title) in enumerate(entries, 1):
         if sunday_candidate and youth_candidate:
             break
         if "樣青講堂" in title and youth_candidate is None:
             youth_candidate = (vid, title)
+            logging.info(f"樣青候選：清單 #{i:02d} {vid}")
         elif "主日" in title and "樣青講堂" not in title and sunday_candidate is None:
             sunday_candidate = (vid, title)
+            logging.info(f"主日候選：清單 #{i:02d} {vid}")
 
     def parse_date_from_title(title):
         """從標題開頭解析 YYYY.MM.DD，例如「2026.06.14 | 上帝...」"""

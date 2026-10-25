@@ -25,7 +25,12 @@
   一併加入當天主日 10.25〈進入應許前的預備｜黃仁鵬 傳道〉；commit `fc52297` 已 push、Pages 部署 success。
 - **驗證**：本機四頁 grep 新 ID 各 1 筆；線上 `https://www.jesuswaytaipei.org/` 四頁（中英 sunday/youth）各 1 筆；英文翻譯內容已看過正常。
   未用瀏覽器看畫面（只是表格多一列，版型未動）。
-- **未做（待決定）**：log 記下 flat-playlist 前幾筆 ID＋標題以便事後查原因；樣青候選改成「所有含關鍵字者取日期最新」。
+- **同日追加：log 記整份清單**。`fetch_latest_streams()` 逐筆記 `清單 #NN ID 標題[:50]`（25 行），選中時記 `主日／樣青候選：清單 #NN ID`。
+  新增 `tests/test_list_logging.py`（2 條，假 yt-dlp 放在 PATH、log 只收進記憶體）；`bash tests/run_all.sh` 55 條全過，正式 log 未被測試寫入。
+  真實資料以 `launchctl kickstart` 跑一次（20:53）：25 行清單正確、主日 #01／樣青 #02、走「無更新」未 push。
+- **選片邏輯刻意未改**：原提議「所有含關鍵字者取日期最新」。flat-playlist 不帶日期（實測 `release_timestamp`／`timestamp`／`upload_date` 皆 `NA`），
+  照做每次要對每支候選多打一次 yt-dlp（25 筆中樣青 4 支、主日約 20 支），CI 限流下會多出大量抓不到日期的情況；
+  且表格是插在最上面，補到舊片會排序錯亂。三個原因假設裡它只救得了「排在舊片之後」那一種，等下次 log 證明是這種再改。
 
 ---
 

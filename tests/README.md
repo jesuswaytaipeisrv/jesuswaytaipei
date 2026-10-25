@@ -1,7 +1,7 @@
 # tests — 週四批次、心跳與 SEO head 的回歸測試
 
 ```bash
-bash tests/run_all.sh          # 全部（53 條，約 10 秒）
+bash tests/run_all.sh          # 全部（55 條，約 10 秒）
 python3 tests/test_heartbeat.py   # 單跑一支
 ```
 
@@ -21,6 +21,7 @@ Telegram 一律安全：token 在測試中置空，而 `load_env()` 用 `setdefa
 | `test_last_run_state.py` | 4 | 心跳的訊號來源 `logs/last_run.json`：欄位齊全、`SystemExit` 路徑也落盤、舊內容會被覆蓋 |
 | `test_seo_head.py` | 12 | SEO 基礎建設（`docs/SEO_HANDOFF.md` F 項）：canonical＝`og:url`、hreflang 三行雙向一致且指向真實檔案、`sitemap.xml` 與頁面集合相等、`robots.txt` 沒擋首頁／`assets/`、首頁 Church JSON-LD、GA 片段每頁恰好一次、中英頁檔名集合相同（新增頁面漏貼會失敗）。頁面清單從檔案系統掃出、不寫死 |
 | `test_title_parse.py` | 3 | 主日標題的講員解析：新舊兩種結尾段（`台北樣教會線上主日`／`台北樣線上主日`）都不會把雜訊當講員；標題抄週四 log 的真實值 |
+| `test_list_logging.py` | 2 | `fetch_latest_streams()` 把整份 flat-playlist 清單（序號＋ID＋標題）與主日／樣青選中第幾筆寫進 log（2026-10-22 漏抓樣青後加，事後才查得出原因）；清單抄 10-25 頻道真實值 |
 
 ## 為什麼 stub 只降到 `git()` 這一層
 
